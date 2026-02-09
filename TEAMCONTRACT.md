@@ -56,7 +56,7 @@
 
 **Handtekeningen:**
 - Zaine(Zaine)
-- ___________________ (Kyro)
+- Kyro (Kyro)
 - ___________________ (Puck)
 - ___________________ (Koen)
 - ___________________ (Jelani)
