@@ -57,7 +57,7 @@
 **Handtekeningen:**
 - Zaine(Zaine)
 - Kyro (Kyro)
-- ___________________ (Puck)
+- Puck (Puck)
 - ___________________ (Koen)
 - Jelani (Jelani)
 
