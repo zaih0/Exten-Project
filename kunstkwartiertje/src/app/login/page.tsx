@@ -1,8 +1,6 @@
-import Image from "next/image";
-
+// login screen
 export default function login() {
   return (
-    // login screen
     <div className="flex flex-col min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
       <h1 className="text-3xl font-bold">Login</h1>
       <form className="flex flex-col gap-4">
