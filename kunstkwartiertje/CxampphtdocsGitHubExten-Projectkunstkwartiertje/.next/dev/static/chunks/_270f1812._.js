@@ -4,86 +4,55 @@
 
 __turbopack_context__.s([
     "default",
-    ()=>ArtistProfilePage
+    ()=>ArtistProfile
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$compiler$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/compiler-runtime.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+;
+var _s = __turbopack_context__.k.signature();
 "use client";
 ;
 ;
-function ArtistProfilePage() {
-    const $ = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$compiler$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["c"])(5);
-    if ($[0] !== "d6181387c70c1a5d2e339ece446652ed67b5a7ada09362820273cb27689eeb94") {
-        for(let $i = 0; $i < 5; $i += 1){
+function ArtistProfile() {
+    _s();
+    const $ = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$compiler$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["c"])(31);
+    if ($[0] !== "165063f8b5d145bea5b182f8ee08d1467917a3da7fa5386cbe931ffa8ce94ae2") {
+        for(let $i = 0; $i < 31; $i += 1){
             $[$i] = Symbol.for("react.memo_cache_sentinel");
         }
-        $[0] = "d6181387c70c1a5d2e339ece446652ed67b5a7ada09362820273cb27689eeb94";
+        $[0] = "165063f8b5d145bea5b182f8ee08d1467917a3da7fa5386cbe931ffa8ce94ae2";
     }
+    const [expandedImage, setExpandedImage] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     let t0;
-    if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-        t0 = {
-            backgroundImage: "radial-gradient(circle at 12% 18%, rgba(232, 121, 249, 0.34) 0%, rgba(196, 181, 253, 0.20) 30%, rgba(255,255,255,0) 62%), radial-gradient(circle at 86% 12%, rgba(168, 85, 247, 0.34) 0%, rgba(129, 140, 248, 0.18) 34%, rgba(255,255,255,0) 62%), radial-gradient(circle at 50% 92%, rgba(217, 70, 239, 0.26) 0%, rgba(139, 92, 246, 0.14) 38%, rgba(255,255,255,0) 68%), linear-gradient(135deg, rgba(250, 245, 255, 1) 0%, rgba(237, 233, 254, 1) 38%, rgba(243, 232, 255, 1) 68%, rgba(253, 242, 248, 1) 100%)"
-        };
-        $[1] = t0;
-    } else {
-        t0 = $[1];
-    }
     let t1;
-    if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-        t1 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-            className: "mb-6 rounded-full border border-purple-200/35 bg-white/75 backdrop-blur",
-            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "flex h-16 items-center px-6",
-                children: [
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                        className: "text-sm font-semibold text-zinc-900",
-                        children: "Artist profile page Desktop"
-                    }, void 0, false, {
-                        fileName: "[project]/src/app/profile/artist/page.tsx",
-                        lineNumber: 23,
-                        columnNumber: 144
-                    }, this),
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
-                        className: "rounded-full",
-                        src: "/profileImage.jpg",
-                        alt: "Artist profile desktop preview"
-                    }, void 0, false, {
-                        fileName: "[project]/src/app/profile/artist/page.tsx",
-                        lineNumber: 23,
-                        columnNumber: 232
-                    }, this)
-                ]
-            }, void 0, true, {
-                fileName: "[project]/src/app/profile/artist/page.tsx",
-                lineNumber: 23,
-                columnNumber: 99
-            }, this)
-        }, void 0, false, {
-            fileName: "[project]/src/app/profile/artist/page.tsx",
-            lineNumber: 23,
-            columnNumber: 10
-        }, this);
+    if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
+        t0 = ({
+            "ArtistProfile[useEffect()]": ()=>{
+                const handleKeyDown = {
+                    "ArtistProfile[useEffect() > handleKeyDown]": (event)=>{
+                        if (event.key === "Escape") {
+                            setExpandedImage(null);
+                        }
+                    }
+                }["ArtistProfile[useEffect() > handleKeyDown]"];
+                window.addEventListener("keydown", handleKeyDown);
+                return ()=>window.removeEventListener("keydown", handleKeyDown);
+            }
+        })["ArtistProfile[useEffect()]"];
+        t1 = [];
+        $[1] = t0;
         $[2] = t1;
     } else {
+        t0 = $[1];
         t1 = $[2];
     }
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])(t0, t1);
     let t2;
     if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
-        t2 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("aside", {
-            className: "w-64 rounded-xl border border-purple-200/35 bg-white/75 p-4 backdrop-blur",
-            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "mb-3 text-xs font-semibold text-purple-700/80",
-                children: "Artist profile sidebar"
-            }, void 0, false, {
-                fileName: "[project]/src/app/profile/artist/page.tsx",
-                lineNumber: 30,
-                columnNumber: 103
-            }, this)
-        }, void 0, false, {
-            fileName: "[project]/src/app/profile/artist/page.tsx",
-            lineNumber: 30,
-            columnNumber: 10
-        }, this);
+        t2 = {
+            backgroundImage: "radial-gradient(circle at 12% 18%, rgba(232, 121, 249, 0.34) 0%, rgba(196, 181, 253, 0.20) 30%, rgba(255,255,255,0) 62%), radial-gradient(circle at 86% 12%, rgba(168, 85, 247, 0.34) 0%, rgba(129, 140, 248, 0.18) 34%, rgba(255,255,255,0) 62%), radial-gradient(circle at 50% 92%, rgba(217, 70, 239, 0.26) 0%, rgba(139, 92, 246, 0.14) 38%, rgba(255,255,255,0) 68%), linear-gradient(135deg, rgba(250, 245, 255, 1) 0%, rgba(237, 233, 254, 1) 38%, rgba(243, 232, 255, 1) 68%, rgba(253, 242, 248, 1) 100%)"
+        };
         $[3] = t2;
     } else {
         t2 = $[3];
@@ -91,81 +60,729 @@ function ArtistProfilePage() {
     let t3;
     if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
         t3 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-            className: "min-h-screen px-6 py-8 font-sans",
-            style: t0,
-            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "mx-auto w-full max-w-6xl rounded-full bg-linear-to-br from-purple-50/60 to-white/60 p-6 backdrop-blur",
-                children: [
-                    t1,
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        className: "flex gap-6",
-                        children: [
-                            t2,
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("main", {
-                                className: "flex-1 rounded-xl border border-purple-200/35 bg-white/75 p-6 backdrop-blur",
-                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "space-y-4",
-                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        className: "rounded-lg border border-purple-200/60 bg-white/60 p-4",
-                                        children: [
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                className: "text-sm font-semibold text-purple-700/90",
-                                                children: "Artist profile content"
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/app/profile/artist/page.tsx",
-                                                lineNumber: 37,
-                                                columnNumber: 419
-                                            }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                className: "mt-1 text-xs text-zinc-600/80",
-                                                children: "Voorbeelden van mogelijke situaties:"
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/app/profile/artist/page.tsx",
-                                                lineNumber: 37,
-                                                columnNumber: 505
-                                            }, this)
-                                        ]
-                                    }, void 0, true, {
-                                        fileName: "[project]/src/app/profile/artist/page.tsx",
-                                        lineNumber: 37,
-                                        columnNumber: 347
-                                    }, this)
-                                }, void 0, false, {
-                                    fileName: "[project]/src/app/profile/artist/page.tsx",
-                                    lineNumber: 37,
-                                    columnNumber: 320
-                                }, this)
-                            }, void 0, false, {
-                                fileName: "[project]/src/app/profile/artist/page.tsx",
-                                lineNumber: 37,
-                                columnNumber: 226
-                            }, this)
-                        ]
-                    }, void 0, true, {
-                        fileName: "[project]/src/app/profile/artist/page.tsx",
-                        lineNumber: 37,
-                        columnNumber: 194
-                    }, this)
-                ]
-            }, void 0, true, {
-                fileName: "[project]/src/app/profile/artist/page.tsx",
-                lineNumber: 37,
-                columnNumber: 71
-            }, this)
+            className: "h-32 md:h-48 w-full",
+            style: {
+                "backgroundImage": "linear-gradient(to right, rgb(206, 177, 240), rgb(229, 198, 238))"
+            }
         }, void 0, false, {
             fileName: "[project]/src/app/profile/artist/page.tsx",
-            lineNumber: 37,
+            lineNumber: 49,
             columnNumber: 10
         }, this);
         $[4] = t3;
     } else {
         t3 = $[4];
     }
-    return t3;
+    let t4;
+    if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
+        t4 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100 shrink-0",
+            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+                className: "w-full h-full object-cover",
+                src: "/profileImage.jpg",
+                alt: "Profile Picture"
+            }, void 0, false, {
+                fileName: "[project]/src/app/profile/artist/page.tsx",
+                lineNumber: 58,
+                columnNumber: 135
+            }, this)
+        }, void 0, false, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 58,
+            columnNumber: 10
+        }, this);
+        $[5] = t4;
+    } else {
+        t4 = $[5];
+    }
+    let t5;
+    if ($[6] === Symbol.for("react.memo_cache_sentinel")) {
+        t5 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "grow text-center md:text-left",
+            children: [
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
+                    className: "text-2xl md:text-3xl font-bold text-gray-900",
+                    children: "Artist Name"
+                }, void 0, false, {
+                    fileName: "[project]/src/app/profile/artist/page.tsx",
+                    lineNumber: 65,
+                    columnNumber: 57
+                }, this),
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("br", {}, void 0, false, {
+                    fileName: "[project]/src/app/profile/artist/page.tsx",
+                    lineNumber: 65,
+                    columnNumber: 134
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 65,
+            columnNumber: 10
+        }, this);
+        $[6] = t5;
+    } else {
+        t5 = $[6];
+    }
+    let t6;
+    if ($[7] === Symbol.for("react.memo_cache_sentinel")) {
+        t6 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "flex flex-col md:flex-row items-center md:items-end gap-6 -mt-16 md:-mt-20 mb-4",
+            children: [
+                t4,
+                t5,
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "flex gap-3 mt-4 md:mt-0",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                        className: "px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded-full hover:bg-gray-200 transition",
+                        children: "Wijzig Profiel"
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/profile/artist/page.tsx",
+                        lineNumber: 72,
+                        columnNumber: 156
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/app/profile/artist/page.tsx",
+                    lineNumber: 72,
+                    columnNumber: 115
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 72,
+            columnNumber: 10
+        }, this);
+        $[7] = t6;
+    } else {
+        t6 = $[7];
+    }
+    let t7;
+    if ($[8] === Symbol.for("react.memo_cache_sentinel")) {
+        t7 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8",
+            children: [
+                t3,
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "px-6 pb-6 relative",
+                    children: [
+                        t6,
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "mt-6 md:pl-2",
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
+                                    className: "text-lg font-semibold text-gray-800 mb-2",
+                                    children: "About Me"
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/profile/artist/page.tsx",
+                                    lineNumber: 79,
+                                    columnNumber: 176
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                    className: "text-gray-600 leading-relaxed",
+                                    children: "Over mij.=wdinwdinwn"
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/profile/artist/page.tsx",
+                                    lineNumber: 79,
+                                    columnNumber: 246
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/app/profile/artist/page.tsx",
+                            lineNumber: 79,
+                            columnNumber: 146
+                        }, this)
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/src/app/profile/artist/page.tsx",
+                    lineNumber: 79,
+                    columnNumber: 106
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 79,
+            columnNumber: 10
+        }, this);
+        $[8] = t7;
+    } else {
+        t7 = $[8];
+    }
+    let t8;
+    if ($[9] === Symbol.for("react.memo_cache_sentinel")) {
+        t8 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+            className: "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 cursor-zoom-in",
+            src: "/KW1.jpg",
+            alt: "Kunstwerk 1",
+            onClick: {
+                "ArtistProfile[<img>.onClick]": ()=>setExpandedImage("/KW1.jpg")
+            }["ArtistProfile[<img>.onClick]"]
+        }, void 0, false, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 86,
+            columnNumber: 10
+        }, this);
+        $[9] = t8;
+    } else {
+        t8 = $[9];
+    }
+    let t9;
+    if ($[10] === Symbol.for("react.memo_cache_sentinel")) {
+        t9 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "relative h-40 md:h-44 w-full overflow-hidden",
+            children: [
+                t8,
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                        className: "font-bold text-white text-lg",
+                        children: "Kunstwerk 1"
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/profile/artist/page.tsx",
+                        lineNumber: 95,
+                        columnNumber: 171
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/app/profile/artist/page.tsx",
+                    lineNumber: 95,
+                    columnNumber: 76
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 95,
+            columnNumber: 10
+        }, this);
+        $[10] = t9;
+    } else {
+        t9 = $[10];
+    }
+    let t10;
+    if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
+        t10 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition group cursor-pointer overflow-hidden",
+            children: [
+                t9,
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "p-4",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                        className: "text-sm text-gray-500 line-clamp-2",
+                        children: "Beschrijving"
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/profile/artist/page.tsx",
+                        lineNumber: 102,
+                        columnNumber: 170
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/app/profile/artist/page.tsx",
+                    lineNumber: 102,
+                    columnNumber: 149
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 102,
+            columnNumber: 11
+        }, this);
+        $[11] = t10;
+    } else {
+        t10 = $[11];
+    }
+    let t11;
+    if ($[12] === Symbol.for("react.memo_cache_sentinel")) {
+        t11 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+            className: "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 cursor-zoom-in",
+            src: "/KW2.jpg",
+            alt: "Kunstwerk 2",
+            onClick: {
+                "ArtistProfile[<img>.onClick]": ()=>setExpandedImage("/KW2.jpg")
+            }["ArtistProfile[<img>.onClick]"]
+        }, void 0, false, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 109,
+            columnNumber: 11
+        }, this);
+        $[12] = t11;
+    } else {
+        t11 = $[12];
+    }
+    let t12;
+    if ($[13] === Symbol.for("react.memo_cache_sentinel")) {
+        t12 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "relative h-40 md:h-44 w-full overflow-hidden",
+            children: [
+                t11,
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                        className: "font-bold text-white text-lg",
+                        children: "Kunstwerk 2"
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/profile/artist/page.tsx",
+                        lineNumber: 118,
+                        columnNumber: 173
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/app/profile/artist/page.tsx",
+                    lineNumber: 118,
+                    columnNumber: 78
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 118,
+            columnNumber: 11
+        }, this);
+        $[13] = t12;
+    } else {
+        t12 = $[13];
+    }
+    let t13;
+    if ($[14] === Symbol.for("react.memo_cache_sentinel")) {
+        t13 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition group cursor-pointer overflow-hidden",
+            children: [
+                t12,
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "p-4",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                        className: "text-sm text-gray-500 line-clamp-2",
+                        children: "Beschrijving"
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/profile/artist/page.tsx",
+                        lineNumber: 125,
+                        columnNumber: 171
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/app/profile/artist/page.tsx",
+                    lineNumber: 125,
+                    columnNumber: 150
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 125,
+            columnNumber: 11
+        }, this);
+        $[14] = t13;
+    } else {
+        t13 = $[14];
+    }
+    let t14;
+    if ($[15] === Symbol.for("react.memo_cache_sentinel")) {
+        t14 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+            className: "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 cursor-zoom-in",
+            src: "/KW3.jpg",
+            alt: "Kunstwerk 3",
+            onClick: {
+                "ArtistProfile[<img>.onClick]": ()=>setExpandedImage("/KW3.jpg")
+            }["ArtistProfile[<img>.onClick]"]
+        }, void 0, false, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 132,
+            columnNumber: 11
+        }, this);
+        $[15] = t14;
+    } else {
+        t14 = $[15];
+    }
+    let t15;
+    if ($[16] === Symbol.for("react.memo_cache_sentinel")) {
+        t15 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "relative h-40 md:h-44 w-full overflow-hidden",
+            children: [
+                t14,
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                        className: "font-bold text-white text-lg",
+                        children: "Kunstwerk 3"
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/profile/artist/page.tsx",
+                        lineNumber: 141,
+                        columnNumber: 173
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/app/profile/artist/page.tsx",
+                    lineNumber: 141,
+                    columnNumber: 78
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 141,
+            columnNumber: 11
+        }, this);
+        $[16] = t15;
+    } else {
+        t15 = $[16];
+    }
+    let t16;
+    if ($[17] === Symbol.for("react.memo_cache_sentinel")) {
+        t16 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition group cursor-pointer overflow-hidden",
+            children: [
+                t15,
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "p-4",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                        className: "text-sm text-gray-500 line-clamp-2",
+                        children: "Beschrijving"
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/profile/artist/page.tsx",
+                        lineNumber: 148,
+                        columnNumber: 171
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/app/profile/artist/page.tsx",
+                    lineNumber: 148,
+                    columnNumber: 150
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 148,
+            columnNumber: 11
+        }, this);
+        $[17] = t16;
+    } else {
+        t16 = $[17];
+    }
+    let t17;
+    if ($[18] === Symbol.for("react.memo_cache_sentinel")) {
+        t17 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+            className: "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 cursor-zoom-in",
+            src: "/KW4.jpg",
+            alt: "Kunstwerk 4",
+            onClick: {
+                "ArtistProfile[<img>.onClick]": ()=>setExpandedImage("/KW4.jpg")
+            }["ArtistProfile[<img>.onClick]"]
+        }, void 0, false, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 155,
+            columnNumber: 11
+        }, this);
+        $[18] = t17;
+    } else {
+        t17 = $[18];
+    }
+    let t18;
+    if ($[19] === Symbol.for("react.memo_cache_sentinel")) {
+        t18 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "relative h-40 md:h-44 w-full overflow-hidden",
+            children: [
+                t17,
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                        className: "font-bold text-white text-lg",
+                        children: "Kunstwerk 4"
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/profile/artist/page.tsx",
+                        lineNumber: 164,
+                        columnNumber: 173
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/app/profile/artist/page.tsx",
+                    lineNumber: 164,
+                    columnNumber: 78
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 164,
+            columnNumber: 11
+        }, this);
+        $[19] = t18;
+    } else {
+        t18 = $[19];
+    }
+    let t19;
+    if ($[20] === Symbol.for("react.memo_cache_sentinel")) {
+        t19 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition group cursor-pointer overflow-hidden",
+            children: [
+                t18,
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "p-4",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                        className: "text-sm text-gray-500 line-clamp-2",
+                        children: "Beschrijving"
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/profile/artist/page.tsx",
+                        lineNumber: 171,
+                        columnNumber: 171
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/app/profile/artist/page.tsx",
+                    lineNumber: 171,
+                    columnNumber: 150
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 171,
+            columnNumber: 11
+        }, this);
+        $[20] = t19;
+    } else {
+        t19 = $[20];
+    }
+    let t20;
+    if ($[21] === Symbol.for("react.memo_cache_sentinel")) {
+        t20 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+            className: "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 cursor-zoom-in",
+            src: "/KW1.jpg",
+            alt: "Kunstwerk 5",
+            onClick: {
+                "ArtistProfile[<img>.onClick]": ()=>setExpandedImage("/KW1.jpg")
+            }["ArtistProfile[<img>.onClick]"]
+        }, void 0, false, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 178,
+            columnNumber: 11
+        }, this);
+        $[21] = t20;
+    } else {
+        t20 = $[21];
+    }
+    let t21;
+    if ($[22] === Symbol.for("react.memo_cache_sentinel")) {
+        t21 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "relative h-40 md:h-44 w-full overflow-hidden",
+            children: [
+                t20,
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                        className: "font-bold text-white text-lg",
+                        children: "Kunstwerk 5"
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/profile/artist/page.tsx",
+                        lineNumber: 187,
+                        columnNumber: 173
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/app/profile/artist/page.tsx",
+                    lineNumber: 187,
+                    columnNumber: 78
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 187,
+            columnNumber: 11
+        }, this);
+        $[22] = t21;
+    } else {
+        t21 = $[22];
+    }
+    let t22;
+    if ($[23] === Symbol.for("react.memo_cache_sentinel")) {
+        t22 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition group cursor-pointer overflow-hidden",
+            children: [
+                t21,
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "p-4",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                        className: "text-sm text-gray-500 line-clamp-2",
+                        children: "Beschrijving"
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/profile/artist/page.tsx",
+                        lineNumber: 194,
+                        columnNumber: 171
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/app/profile/artist/page.tsx",
+                    lineNumber: 194,
+                    columnNumber: 150
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 194,
+            columnNumber: 11
+        }, this);
+        $[23] = t22;
+    } else {
+        t22 = $[23];
+    }
+    let t23;
+    if ($[24] === Symbol.for("react.memo_cache_sentinel")) {
+        t23 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+            className: "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 cursor-zoom-in",
+            src: "/KW2.jpg",
+            alt: "Kunstwerk 6",
+            onClick: {
+                "ArtistProfile[<img>.onClick]": ()=>setExpandedImage("/KW2.jpg")
+            }["ArtistProfile[<img>.onClick]"]
+        }, void 0, false, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 201,
+            columnNumber: 11
+        }, this);
+        $[24] = t23;
+    } else {
+        t23 = $[24];
+    }
+    let t24;
+    if ($[25] === Symbol.for("react.memo_cache_sentinel")) {
+        t24 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "relative h-40 md:h-44 w-full overflow-hidden",
+            children: [
+                t23,
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                        className: "font-bold text-white text-lg",
+                        children: "Kunstwerk 6"
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/profile/artist/page.tsx",
+                        lineNumber: 210,
+                        columnNumber: 173
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/app/profile/artist/page.tsx",
+                    lineNumber: 210,
+                    columnNumber: 78
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 210,
+            columnNumber: 11
+        }, this);
+        $[25] = t24;
+    } else {
+        t24 = $[25];
+    }
+    let t25;
+    if ($[26] === Symbol.for("react.memo_cache_sentinel")) {
+        t25 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "flex flex-col min-h-screen items-center justify-center font-sans text-zinc-900",
+            style: t2,
+            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "w-full max-w-5xl lg:max-w-6xl mx-auto p-4 md:p-8",
+                children: [
+                    t7,
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6",
+                            children: [
+                                t10,
+                                t13,
+                                t16,
+                                t19,
+                                t22,
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    className: "bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition group cursor-pointer overflow-hidden",
+                                    children: [
+                                        t24,
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "p-4",
+                                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                className: "text-sm text-gray-500 line-clamp-2",
+                                                children: "Beschrijving"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/profile/artist/page.tsx",
+                                                lineNumber: 217,
+                                                columnNumber: 448
+                                            }, this)
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/profile/artist/page.tsx",
+                                            lineNumber: 217,
+                                            columnNumber: 427
+                                        }, this)
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/src/app/profile/artist/page.tsx",
+                                    lineNumber: 217,
+                                    columnNumber: 288
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/app/profile/artist/page.tsx",
+                            lineNumber: 217,
+                            columnNumber: 193
+                        }, this)
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/profile/artist/page.tsx",
+                        lineNumber: 217,
+                        columnNumber: 188
+                    }, this)
+                ]
+            }, void 0, true, {
+                fileName: "[project]/src/app/profile/artist/page.tsx",
+                lineNumber: 217,
+                columnNumber: 118
+            }, this)
+        }, void 0, false, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 217,
+            columnNumber: 11
+        }, this);
+        $[26] = t25;
+    } else {
+        t25 = $[26];
+    }
+    let t26;
+    if ($[27] !== expandedImage) {
+        t26 = expandedImage && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4",
+            onClick: {
+                "ArtistProfile[<div>.onClick]": ()=>setExpandedImage(null)
+            }["ArtistProfile[<div>.onClick]"],
+            role: "button",
+            tabIndex: 0,
+            onKeyDown: {
+                "ArtistProfile[<div>.onKeyDown]": (event_0)=>{
+                    if (event_0.key === "Enter" || event_0.key === " ") {
+                        setExpandedImage(null);
+                    }
+                }
+            }["ArtistProfile[<div>.onKeyDown]"],
+            "aria-label": "Sluit vergrote afbeelding",
+            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+                src: expandedImage,
+                alt: "Vergroot kunstwerk",
+                className: "max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl",
+                onClick: _ArtistProfileImgOnClick
+            }, void 0, false, {
+                fileName: "[project]/src/app/profile/artist/page.tsx",
+                lineNumber: 232,
+                columnNumber: 81
+            }, this)
+        }, void 0, false, {
+            fileName: "[project]/src/app/profile/artist/page.tsx",
+            lineNumber: 224,
+            columnNumber: 28
+        }, this);
+        $[27] = expandedImage;
+        $[28] = t26;
+    } else {
+        t26 = $[28];
+    }
+    let t27;
+    if ($[29] !== t26) {
+        t27 = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
+            children: [
+                t25,
+                t26
+            ]
+        }, void 0, true);
+        $[29] = t26;
+        $[30] = t27;
+    } else {
+        t27 = $[30];
+    }
+    return t27;
 }
-_c = ArtistProfilePage;
+_s(ArtistProfile, "986nkRHgMH6pcH9BbIRF9cfbEB4=");
+_c = ArtistProfile;
+function _ArtistProfileImgOnClick(event_1) {
+    return event_1.stopPropagation();
+}
 var _c;
-__turbopack_context__.k.register(_c, "ArtistProfilePage");
+__turbopack_context__.k.register(_c, "ArtistProfile");
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
 }

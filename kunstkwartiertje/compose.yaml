@@ -12,7 +12,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: runner
+      target: deps
     ports:
       - "3000:3000"
 
@@ -22,8 +22,11 @@ services:
 
     environment:
       - NODE_ENV=development
+      - WATCHPACK_POLLING=100
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=100
 
-    command: npm run dev
+    command: npm run dev -- --webpack
 
     # The commented out section below is an example of how to define a PostgreSQL
     # database that your application can use. `depends_on` tells Docker Compose to
