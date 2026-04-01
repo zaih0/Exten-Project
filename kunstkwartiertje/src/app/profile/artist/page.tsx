@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function ArtistProfile() {
@@ -50,9 +51,12 @@ export default function ArtistProfile() {
                         </div>
                         
                         <div className="flex gap-3 mt-4 md:mt-0">
-                            <button className="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded-full hover:bg-gray-200 transition">
+                            <Link
+                                href="/profile/artist/edit"
+                                className="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded-full hover:bg-gray-200 transition"
+                            >
                                 Wijzig Profiel
-                            </button>
+                            </Link>
                         </div>
 
                     </div>
@@ -60,7 +64,7 @@ export default function ArtistProfile() {
                     <div className="mt-6 md:pl-2">
                         <h2 className="text-lg font-semibold text-gray-800 mb-2">About Me</h2>
                         <p className="text-gray-600 leading-relaxed">
-                            Over mij.=wdinwdinwn.Hallo????
+                            Over mij...
                         </p>
                     </div>
                 </div>
@@ -77,7 +81,7 @@ export default function ArtistProfile() {
                                 alt="Kunstwerk 1"
                                 onClick={() => setExpandedImage("/KW1.jpg")}
                             />
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+                            <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/60 to-transparent p-3">
                                 <h3 className="font-bold text-white text-lg">Kunstwerk 1</h3>
                             </div>
                         </div>
@@ -94,7 +98,7 @@ export default function ArtistProfile() {
                                 alt="Kunstwerk 2"
                                 onClick={() => setExpandedImage("/KW2.jpg")}
                             />
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+                            <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/60 to-transparent p-3">
                                 <h3 className="font-bold text-white text-lg">Kunstwerk 2</h3>
                             </div>
                         </div>
@@ -111,7 +115,7 @@ export default function ArtistProfile() {
                                 alt="Kunstwerk 3"
                                 onClick={() => setExpandedImage("/KW3.jpg")}
                             />
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+                            <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/60 to-transparent p-3">
                                 <h3 className="font-bold text-white text-lg">Kunstwerk 3</h3>
                             </div>
                         </div>
@@ -128,7 +132,7 @@ export default function ArtistProfile() {
                                 alt="Kunstwerk 4"
                                 onClick={() => setExpandedImage("/KW4.jpg")}
                             />
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+                            <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/60 to-transparent p-3">
                                 <h3 className="font-bold text-white text-lg">Kunstwerk 4</h3>
                             </div>
                         </div>
@@ -145,7 +149,7 @@ export default function ArtistProfile() {
                                 alt="Kunstwerk 5"
                                 onClick={() => setExpandedImage("/KW1.jpg")}
                             />
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+                            <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/60 to-transparent p-3">
                                 <h3 className="font-bold text-white text-lg">Kunstwerk 5</h3>
                             </div>
                         </div>
@@ -162,7 +166,7 @@ export default function ArtistProfile() {
                                 alt="Kunstwerk 6"
                                 onClick={() => setExpandedImage("/KW2.jpg")}
                             />
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+                            <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/60 to-transparent p-3">
                                 <h3 className="font-bold text-white text-lg">Kunstwerk 6</h3>
                             </div>
                         </div>
