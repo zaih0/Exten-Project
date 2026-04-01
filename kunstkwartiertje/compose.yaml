@@ -16,6 +16,8 @@ services:
     ports:
       - "3000:3000"
 
+    user: "0:0"  # use root in dev for bind-mount write permissions on /app
+
     volumes:
       - .:/app
       - /app/node_modules
