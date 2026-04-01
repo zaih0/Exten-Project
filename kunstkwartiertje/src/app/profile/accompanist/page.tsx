@@ -23,7 +23,7 @@ export default function AccompanistProfile() {
                 <div className="px-6 pb-6 relative">
                     <div className="flex flex-col md:flex-row items-center md:items-end gap-6 -mt-16 md:-mt-20 mb-4">
                         
-                        <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100 flex-shrink-0">
+                        <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100 shrink-0">
                             <img 
                                 className="w-full h-full object-cover" 
                                 src="https://ui-avatars.com/api/?name=Accompanist+Name&background=random" 
@@ -31,7 +31,7 @@ export default function AccompanistProfile() {
                             />
                         </div>
                         
-                        <div className="flex-grow text-center md:text-left">
+                        <div className="grow text-center md:text-left">
                             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">accompanist Name</h1>
                             <br />
                         </div>
