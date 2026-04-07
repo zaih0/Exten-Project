@@ -13,9 +13,14 @@ export default function AccompanistProfile() {
         { name: "Artist 4", description: "description..." },
         { name: "Artist 5", description: "description..." },
         { name: "Artist 6", description: "description..." },
+        { name: "Artist 7", description: "description..." },
+        { name: "Artist 8", description: "description..." },
+        { name: "Artist 9", description: "description..." },
+        { name: "Artist 10", description: "description..." },
+        { name: "Artist 11", description: "description..." },
     ];
     
-    const itemsPerPage = 3;
+    const itemsPerPage = 6;
     const totalPages = Math.ceil(artists.length / itemsPerPage);
     
     const nextArtists = () => {
@@ -31,14 +36,14 @@ export default function AccompanistProfile() {
     // Bij gebrek aan een echte database voeg ik een paar extra placeholder artworks toe 
     // zodat de paginering hier ook goed te zien is.
     const artworks = [
-        { name: "Art name 1", artist: "Artist 1", description: "Description..." },
-        { name: "Art name 2", artist: "Artist 2", description: "Description..." },
-        { name: "Art name 3", artist: "Artist 3", description: "Description..." },
-        { name: "Art name 4", artist: "Artist 4", description: "Description..." },
-        { name: "Art name 5", artist: "Artist 5", description: "Description..." },
+        { name: "Art name 1", artist: "Artist 1", description: "Description...", image_url: "https://placehold.co/600x400" },
+        { name: "Art name 2", artist: "Artist 2", description: "Description...", image_url: "https://placehold.co/600x400" },
+        { name: "Art name 3", artist: "Artist 3", description: "Description...", image_url: "https://placehold.co/600x400" },
+        { name: "Art name 4", artist: "Artist 4", description: "Description...", image_url: "https://placehold.co/600x400" },
+        { name: "Art name 5", artist: "Artist 5", description: "Description...", image_url: "https://placehold.co/600x400" },
     ];
     
-    const itemsPerArtworkPage = 3;
+    const itemsPerArtworkPage = 6;
     const totalArtworkPages = Math.ceil(artworks.length / itemsPerArtworkPage);
     
     const nextArtworks = () => {
@@ -47,6 +52,30 @@ export default function AccompanistProfile() {
     
     const prevArtworks = () => {
         setCurrentArtworkPage((prev) => (prev - 1 + totalArtworkPages) % totalArtworkPages);
+    };
+
+    const [currentApprovedArtworkPage, setCurrentApprovedArtworkPage] = useState(0);
+    
+    const approvedArtworks = [
+        { name: "Approved Art 1", artist: "Artist 1", description: "Beautiful approved portrait...", image_url: "https://placehold.co/600x400" },
+        { name: "Approved Art 2", artist: "Artist 2", description: "Amazing landscape...", image_url: "https://placehold.co/600x400" },
+        { name: "Approved Art 3", artist: "Artist 3", description: "Abstract approved piece...", image_url: "https://placehold.co/600x400" },
+        { name: "Approved Art 4", artist: "Artist 4", description: "Modern art...", image_url: "https://placehold.co/600x400" },
+        { name: "Approved Art 5", artist: "Artist 5", description: "A sculpture description...", image_url: "https://placehold.co/600x400" },
+        { name: "Approved Art 6", artist: "Artist 5", description: "Another approved piece...", image_url: "https://placehold.co/600x400" },
+        { name: "Approved Art 7", artist: "Artist 6", description: "Oil painting...", image_url: "https://placehold.co/600x400" },
+        { name: "Approved Art 8", artist: "Artist 6", description: "Watercolor painting...", image_url: "https://placehold.co/600x400" },
+    ];
+    
+    const itemsPerApprovedArtworkPage = 6;
+    const totalApprovedArtworkPages = Math.ceil(approvedArtworks.length / itemsPerApprovedArtworkPage);
+    
+    const nextApprovedArtworks = () => {
+        setCurrentApprovedArtworkPage((prev) => (prev + 1) % totalApprovedArtworkPages);
+    };
+    
+    const prevApprovedArtworks = () => {
+        setCurrentApprovedArtworkPage((prev) => (prev - 1 + totalApprovedArtworkPages) % totalApprovedArtworkPages);
     };
 
     return (
@@ -162,8 +191,8 @@ export default function AccompanistProfile() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {artworks.slice(currentArtworkPage * itemsPerArtworkPage, (currentArtworkPage + 1) * itemsPerArtworkPage).map((artwork, index) => (
                         <div key={index} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-                            <div className="h-48 bg-gray-200 w-full flex items-center justify-center">
-                                <span className="text-gray-400">Artwork Image</span>
+                            <div className="h-48 w-full overflow-hidden">
+                                <img src={artwork.image_url} alt={artwork.name} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                             </div>
                             <div className="p-5 flex-grow flex flex-col">
                                 <h3 className="font-bold text-gray-900 text-lg mb-1">{artwork.name}</h3>
@@ -175,6 +204,45 @@ export default function AccompanistProfile() {
                                     </button>
                                     <button className="flex-1 py-2 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition">
                                         Afkeuren
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Approved Artworks Section */}
+            <div className="mt-12">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">Gepubliceerde Kunstwerken</h2>
+                    {totalApprovedArtworkPages > 1 && (
+                        <div className="flex items-center gap-4 bg-white px-4 py-1.5 rounded-full border border-gray-200 shadow-sm">
+                            <button onClick={prevApprovedArtworks} className="p-1 rounded-full hover:bg-gray-100 text-gray-600 transition" title="Vorige">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                            </button>
+                            <span className="text-sm font-bold text-purple-700 min-w-[3rem] text-center">
+                                {currentApprovedArtworkPage + 1} / {totalApprovedArtworkPages}
+                            </span>
+                            <button onClick={nextApprovedArtworks} className="p-1 rounded-full hover:bg-gray-100 text-gray-600 transition" title="Volgende">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                            </button>
+                        </div>
+                    )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {approvedArtworks.slice(currentApprovedArtworkPage * itemsPerApprovedArtworkPage, (currentApprovedArtworkPage + 1) * itemsPerApprovedArtworkPage).map((artwork, index) => (
+                        <div key={index} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                            <div className="h-48 w-full overflow-hidden">
+                                <img src={artwork.image_url} alt={artwork.name} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                            </div>
+                            <div className="p-5 flex-grow flex flex-col">
+                                <h3 className="font-bold text-gray-900 text-lg mb-1">{artwork.name}</h3>
+                                <p className="text-sm text-purple-600 font-medium mb-3">Door: {artwork.artist}</p>
+                                <p className="text-sm text-gray-600 mb-4 line-clamp-2">{artwork.description}</p>
+                                <div className="mt-auto flex gap-2">
+                                    <button className="flex-1 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition">
+                                        Bekijken
                                     </button>
                                 </div>
                             </div>
