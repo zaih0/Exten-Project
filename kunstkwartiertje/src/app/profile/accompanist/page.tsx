@@ -7,21 +7,21 @@ export default function AccompanistProfile() {
     const [currentPage, setCurrentPage] = useState(0);
     
     const artists = [
-        { name: "Artist 1", description: "description..." },
-        { name: "Artist 2", description: "description..." },
-        { name: "Artist 3", description: "description..." },
-        { name: "Artist 4", description: "description..." },
-        { name: "Artist 5", description: "description..." },
-        { name: "Artist 6", description: "description..." },
-        { name: "Artist 7", description: "description..." },
-        { name: "Artist 8", description: "description..." },
-        { name: "Artist 9", description: "description..." },
-        { name: "Artist 10", description: "description..." },
-        { name: "Artist 11", description: "description..." },
+        { id:1, name: "Artist 1", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+1&background=random" },
+        { id:2, name: "Artist 2", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+2&background=random" },
+        { id:3, name: "Artist 3", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+3&background=random" },
+        { id:4, name: "Artist 4", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+4&background=random" },
+        { id:5, name: "Artist 5", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+5&background=random" },
+        { id:6, name: "Artist 6", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+6&background=random" },
+        { id:7, name: "Artist 7", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+7&background=random" },
+        { id:8, name: "Artist 8", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+8&background=random" },
+        { id:9, name: "Artist 9", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+9&background=random" },
+        { id:10, name: "Artist 10", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+10&background=random" },
+        { id:11, name: "Artist 11", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+11&background=random" },
     ];
     
-    const itemsPerPage = 6;
-    const totalPages = Math.ceil(artists.length / itemsPerPage);
+    const itemsPerProfilePage = 6;
+    const totalPages = Math.ceil(artists.length / itemsPerProfilePage);
     
     const nextArtists = () => {
         setCurrentPage((prev) => (prev + 1) % totalPages);
@@ -36,11 +36,11 @@ export default function AccompanistProfile() {
     // Bij gebrek aan een echte database voeg ik een paar extra placeholder artworks toe 
     // zodat de paginering hier ook goed te zien is.
     const artworks = [
-        { name: "Art name 1", artist: "Artist 1", description: "Description...", image_url: "https://placehold.co/600x400" },
-        { name: "Art name 2", artist: "Artist 2", description: "Description...", image_url: "https://placehold.co/600x400" },
-        { name: "Art name 3", artist: "Artist 3", description: "Description...", image_url: "https://placehold.co/600x400" },
-        { name: "Art name 4", artist: "Artist 4", description: "Description...", image_url: "https://placehold.co/600x400" },
-        { name: "Art name 5", artist: "Artist 5", description: "Description...", image_url: "https://placehold.co/600x400" },
+        { id:1, name: "Art name 1", artist: "Artist 1", description: "Description...", image_url: "https://placehold.co/600x400" },
+        { id:2, name: "Art name 2", artist: "Artist 2", description: "Description...", image_url: "https://placehold.co/600x400" },
+        { id:3, name: "Art name 3", artist: "Artist 3", description: "Description...", image_url: "https://placehold.co/600x400" },
+        { id:4, name: "Art name 4", artist: "Artist 4", description: "Description...", image_url: "https://placehold.co/600x400" },
+        { id:5, name: "Art name 5", artist: "Artist 5", description: "Description...", image_url: "https://placehold.co/600x400" },
     ];
     
     const itemsPerArtworkPage = 6;
@@ -57,14 +57,14 @@ export default function AccompanistProfile() {
     const [currentApprovedArtworkPage, setCurrentApprovedArtworkPage] = useState(0);
     
     const approvedArtworks = [
-        { name: "Approved Art 1", artist: "Artist 1", description: "Beautiful approved portrait...", image_url: "https://placehold.co/600x400" },
-        { name: "Approved Art 2", artist: "Artist 2", description: "Amazing landscape...", image_url: "https://placehold.co/600x400" },
-        { name: "Approved Art 3", artist: "Artist 3", description: "Abstract approved piece...", image_url: "https://placehold.co/600x400" },
-        { name: "Approved Art 4", artist: "Artist 4", description: "Modern art...", image_url: "https://placehold.co/600x400" },
-        { name: "Approved Art 5", artist: "Artist 5", description: "A sculpture description...", image_url: "https://placehold.co/600x400" },
-        { name: "Approved Art 6", artist: "Artist 5", description: "Another approved piece...", image_url: "https://placehold.co/600x400" },
-        { name: "Approved Art 7", artist: "Artist 6", description: "Oil painting...", image_url: "https://placehold.co/600x400" },
-        { name: "Approved Art 8", artist: "Artist 6", description: "Watercolor painting...", image_url: "https://placehold.co/600x400" },
+        { id:1, name: "Approved Art 1", artist: "Artist 1", description: "Beautiful approved portrait...", image_url: "https://placehold.co/600x400" },
+        { id:2, name: "Approved Art 2", artist: "Artist 2", description: "Amazing landscape...", image_url: "https://placehold.co/600x400" },
+        { id:3, name: "Approved Art 3", artist: "Artist 3", description: "Abstract approved piece...", image_url: "https://placehold.co/600x400" },
+        { id:4, name: "Approved Art 4", artist: "Artist 4", description: "Modern art...", image_url: "https://placehold.co/600x400" },
+        { id:5, name: "Approved Art 5", artist: "Artist 5", description: "A sculpture description...", image_url: "https://placehold.co/600x400" },
+        { id:6, name: "Approved Art 6", artist: "Artist 5", description: "Another approved piece...", image_url: "https://placehold.co/600x400" },
+        { id:7, name: "Approved Art 7", artist: "Artist 6", description: "Oil painting...", image_url: "https://placehold.co/600x400" },
+        { id:8, name: "Approved Art 8", artist: "Artist 6", description: "Watercolor painting...", image_url: "https://placehold.co/600x400" },
     ];
     
     const itemsPerApprovedArtworkPage = 6;
@@ -101,13 +101,13 @@ export default function AccompanistProfile() {
                         <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100 shrink-0">
                             <img 
                                 className="w-full h-full object-cover" 
-                                src="https://ui-avatars.com/api/?name=Accompanist+Name&background=random" 
+                                src="https://ui-avatars.com/api/?name=Begeleider+Naam&background=random" 
                                 alt="Profile Picture" 
                             />
                         </div>
                         
                         <div className="grow text-center md:text-left">
-                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">accompanist Name</h1>
+                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Begeleider Naam</h1>
                             <br />
                         </div>
                         
@@ -150,7 +150,7 @@ export default function AccompanistProfile() {
                     )}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {artists.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage).map((artist, index) => (
+                    {artists.slice(currentPage * itemsPerProfilePage, (currentPage + 1) * itemsPerProfilePage).map((artist, index) => (
                         <div key={index} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition relative flex flex-col items-center text-center group">
                             <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                                 <button className="text-gray-400 hover:text-amber-500 hover:bg-amber-50 p-2 rounded-full transition" title="Pas account aan">
@@ -161,7 +161,7 @@ export default function AccompanistProfile() {
                                 </button>
                             </div>
                             <div className="w-20 h-20 rounded-full overflow-hidden mb-4 border-2 border-transparent group-hover:border-blue-500 transition cursor-pointer mt-1">
-                                <img className="w-full h-full object-cover" src={`https://ui-avatars.com/api/?name=${artist.name.replace(" ", "+")}&background=random`} alt={artist.name} />
+                                <img className="w-full h-full object-cover" src={artist.profile_url} alt={artist.name} />
                             </div>
                             <h3 className="font-bold text-gray-900 text-lg cursor-pointer hover:text-blue-600 transition">{artist.name}</h3>
                             <p className="text-sm text-gray-500 line-clamp-2 mt-1">{artist.description}</p>
