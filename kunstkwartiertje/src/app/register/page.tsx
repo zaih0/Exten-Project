@@ -1,9 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-
+import { useRouter } from 'next/navigation';
 import { createClient } from 'src/utils/supabase/client';
 
 export default function RegisterPage() {

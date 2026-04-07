@@ -1,8 +1,54 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 export default function AccompanistProfile() {
+    const [currentPage, setCurrentPage] = useState(0);
+    
+    const artists = [
+        { name: "Artist 1", description: "description..." },
+        { name: "Artist 2", description: "description..." },
+        { name: "Artist 3", description: "description..." },
+        { name: "Artist 4", description: "description..." },
+        { name: "Artist 5", description: "description..." },
+        { name: "Artist 6", description: "description..." },
+    ];
+    
+    const itemsPerPage = 3;
+    const totalPages = Math.ceil(artists.length / itemsPerPage);
+    
+    const nextArtists = () => {
+        setCurrentPage((prev) => (prev + 1) % totalPages);
+    };
+    
+    const prevArtists = () => {
+        setCurrentPage((prev) => (prev - 1 + totalPages) % totalPages);
+    };
+
+    const [currentArtworkPage, setCurrentArtworkPage] = useState(0);
+    
+    // Bij gebrek aan een echte database voeg ik een paar extra placeholder artworks toe 
+    // zodat de paginering hier ook goed te zien is.
+    const artworks = [
+        { name: "Art name 1", artist: "Artist 1", description: "Description..." },
+        { name: "Art name 2", artist: "Artist 2", description: "Description..." },
+        { name: "Art name 3", artist: "Artist 3", description: "Description..." },
+        { name: "Art name 4", artist: "Artist 4", description: "Description..." },
+        { name: "Art name 5", artist: "Artist 5", description: "Description..." },
+    ];
+    
+    const itemsPerArtworkPage = 3;
+    const totalArtworkPages = Math.ceil(artworks.length / itemsPerArtworkPage);
+    
+    const nextArtworks = () => {
+        setCurrentArtworkPage((prev) => (prev + 1) % totalArtworkPages);
+    };
+    
+    const prevArtworks = () => {
+        setCurrentArtworkPage((prev) => (prev - 1 + totalArtworkPages) % totalArtworkPages);
+    };
+
     return (
 
         <div
@@ -37,6 +83,9 @@ export default function AccompanistProfile() {
                         </div>
                         
                         <div className="flex gap-3 mt-4 md:mt-0">
+                            <Link href="" className="px-6 py-2 bg-purple-600 text-white font-medium rounded-full hover:bg-purple-700 transition">
+                                Account Aanmaken
+                            </Link>
                             <button className="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded-full hover:bg-gray-200 transition">
                                 Edit Profile
                             </button>
@@ -53,57 +102,84 @@ export default function AccompanistProfile() {
                 </div>
             </div>
 
+            {/* Artists Section */}
             <div>
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">Mijn Artiesten</h2>
+                    {totalPages > 1 && (
+                        <div className="flex items-center gap-4 bg-white px-4 py-1.5 rounded-full border border-gray-200 shadow-sm">
+                            <button onClick={prevArtists} className="p-1 rounded-full hover:bg-gray-100 text-gray-600 transition" title="Vorige">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                            </button>
+                            <span className="text-sm font-bold text-purple-700 min-w-[3rem] text-center">
+                                {currentPage + 1} / {totalPages}
+                            </span>
+                            <button onClick={nextArtists} className="p-1 rounded-full hover:bg-gray-100 text-gray-600 transition" title="Volgende">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                            </button>
+                        </div>
+                    )}
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition group cursor-pointer flex flex-col items-center text-center">
-                        <div className="w-20 h-20 rounded-full overflow-hidden mb-4 border-2 border-transparent group-hover:border-blue-500 transition">
-                            <img className="w-full h-full object-cover" src="https://ui-avatars.com/api/?name=Artist+One&background=random" alt="Artist" />
+                    {artists.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage).map((artist, index) => (
+                        <div key={index} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition relative flex flex-col items-center text-center group">
+                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                                <button className="text-gray-400 hover:text-amber-500 hover:bg-amber-50 p-2 rounded-full transition" title="Pas account aan">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                                </button>
+                                <button className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-full transition" title="Verwijder account">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                                </button>
+                            </div>
+                            <div className="w-20 h-20 rounded-full overflow-hidden mb-4 border-2 border-transparent group-hover:border-blue-500 transition cursor-pointer mt-1">
+                                <img className="w-full h-full object-cover" src={`https://ui-avatars.com/api/?name=${artist.name.replace(" ", "+")}&background=random`} alt={artist.name} />
+                            </div>
+                            <h3 className="font-bold text-gray-900 text-lg cursor-pointer hover:text-blue-600 transition">{artist.name}</h3>
+                            <p className="text-sm text-gray-500 line-clamp-2 mt-1">{artist.description}</p>
                         </div>
-                        <h3 className="font-bold text-gray-900 text-lg">Artist One</h3>
-                        <p className="text-sm text-gray-500 line-clamp-2">description...</p>
-                    </div>
-                    
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition group cursor-pointer flex flex-col items-center text-center">
-                        <div className="w-20 h-20 rounded-full overflow-hidden mb-4 border-2 border-transparent group-hover:border-blue-500 transition">
-                            <img className="w-full h-full object-cover" src="https://ui-avatars.com/api/?name=Artist+Two&background=random" alt="Artist" />
-                        </div>
-                        <h3 className="font-bold text-gray-900 text-lg">Artist Two</h3>
-                        <p className="text-sm text-gray-500 line-clamp-2">description...</p>
-                    </div>
-                    
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition group cursor-pointer flex flex-col items-center text-center">
-                        <div className="w-20 h-20 rounded-full overflow-hidden mb-4 border-2 border-transparent group-hover:border-blue-500 transition">
-                            <img className="w-full h-full object-cover" src="https://ui-avatars.com/api/?name=Artist+Three&background=random" alt="Artist" />
-                        </div>
-                        <h3 className="font-bold text-gray-900 text-lg">Artist Three</h3>
-                        <p className="text-sm text-gray-500 line-clamp-2">description...</p>
-                    </div>
+                    ))}
+                </div>
+            </div>
 
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition group cursor-pointer flex flex-col items-center text-center">
-                        <div className="w-20 h-20 rounded-full overflow-hidden mb-4 border-2 border-transparent group-hover:border-blue-500 transition">
-                            <img className="w-full h-full object-cover" src="https://ui-avatars.com/api/?name=Artist+Four&background=random" alt="Artist" />
+            {/* Pending Artworks Section */}
+            <div className="mt-12">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">Te Keuren Kunstwerken</h2>
+                    {totalArtworkPages > 1 && (
+                        <div className="flex items-center gap-4 bg-white px-4 py-1.5 rounded-full border border-gray-200 shadow-sm">
+                            <button onClick={prevArtworks} className="p-1 rounded-full hover:bg-gray-100 text-gray-600 transition" title="Vorige">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                            </button>
+                            <span className="text-sm font-bold text-purple-700 min-w-[3rem] text-center">
+                                {currentArtworkPage + 1} / {totalArtworkPages}
+                            </span>
+                            <button onClick={nextArtworks} className="p-1 rounded-full hover:bg-gray-100 text-gray-600 transition" title="Volgende">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                            </button>
                         </div>
-                        <h3 className="font-bold text-gray-900 text-lg">Artist Four</h3>
-                        <p className="text-sm text-gray-500 line-clamp-2">description...</p>
-                    </div>
-                    
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition group cursor-pointer flex flex-col items-center text-center">
-                        <div className="w-20 h-20 rounded-full overflow-hidden mb-4 border-2 border-transparent group-hover:border-blue-500 transition">
-                            <img className="w-full h-full object-cover" src="https://ui-avatars.com/api/?name=Artist+Five&background=random" alt="Artist" />
+                    )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {artworks.slice(currentArtworkPage * itemsPerArtworkPage, (currentArtworkPage + 1) * itemsPerArtworkPage).map((artwork, index) => (
+                        <div key={index} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                            <div className="h-48 bg-gray-200 w-full flex items-center justify-center">
+                                <span className="text-gray-400">Artwork Image</span>
+                            </div>
+                            <div className="p-5 flex-grow flex flex-col">
+                                <h3 className="font-bold text-gray-900 text-lg mb-1">{artwork.name}</h3>
+                                <p className="text-sm text-purple-600 font-medium mb-3">Door: {artwork.artist}</p>
+                                <p className="text-sm text-gray-600 mb-4 line-clamp-2">{artwork.description}</p>
+                                <div className="mt-auto flex gap-2">
+                                    <button className="flex-1 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition">
+                                        Goedkeuren
+                                    </button>
+                                    <button className="flex-1 py-2 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition">
+                                        Afkeuren
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <h3 className="font-bold text-gray-900 text-lg">Artist Five</h3>
-                        <p className="text-sm text-gray-500 line-clamp-2">description...</p>
-                    </div>
-                    
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition group cursor-pointer flex flex-col items-center text-center">
-                        <div className="w-20 h-20 rounded-full overflow-hidden mb-4 border-2 border-transparent group-hover:border-blue-500 transition">
-                            <img className="w-full h-full object-cover" src="https://ui-avatars.com/api/?name=Artist+Six&background=random" alt="Artist" />
-                        </div>
-                        <h3 className="font-bold text-gray-900 text-lg">Artist Six</h3>
-                        <p className="text-sm text-gray-500 line-clamp-2">description...</p>
-                    </div>
-
+                    ))}
                 </div>
             </div>
         </div>
