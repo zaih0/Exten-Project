@@ -1,15 +1,34 @@
-// Admin page Desktop (with tabs)
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type AdminTabKey = "access" | "chat" | "kunst" | "users" | "resetpw";
+type RequestStatus = "pending" | "approved" | "denied";
+
+type PendingRequest = {
+    id: string | number;
+    email: string | null;
+    username: string | null;
+    type: string | null;
+    status: RequestStatus;
+    created_at: string | null;
+};
+
+type BlockedUser = {
+    id: string | number;
+    email: string | null;
+    username: string | null;
+    type: string | null;
+    status: RequestStatus;
+    created_at: string | null;
+    blocked_status: boolean;
+};
 
 const adminTabs: Array<{ key: AdminTabKey; label: string }> = [
     { key: "access", label: "Toegangsverzoeken" },
     { key: "chat", label: "Chat moderatie" },
     { key: "kunst", label: "Kunst moderatie" },
-    { key: "users", label: "Gebruikers verwijderen" },
+    { key: "users", label: "Geblokkeerde gebruikers" },
     { key: "resetpw", label: "Wachtwoord herstellen" },
 ];
 
@@ -41,8 +60,227 @@ const adminTabExamples: Record<AdminTabKey, string[]> = {
     ],
 };
 
+const roleLabels: Record<string, string> = {
+    begeleider: "Begeleider",
+    ondernemer: "Ondernemer",
+    kunstenaar: "Kunstenaar",
+};
+
+const formatRoleLabel = (role: string | null) => {
+    if (!role) return "Onbekend";
+    return roleLabels[role] ?? `${role.charAt(0).toUpperCase()}${role.slice(1)}`;
+};
+
+const formatRequestDate = (value: string | null) => {
+    if (!value) return "Onbekende datum";
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Onbekende datum";
+
+    return new Intl.DateTimeFormat("nl-NL", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(date);
+};
+
 export default function AdminPage() {
     const [activeTab, setActiveTab] = useState<AdminTabKey>("access");
+    const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
+    const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
+    const [isLoadingRequests, setIsLoadingRequests] = useState(true);
+    const [isLoadingBlockedUsers, setIsLoadingBlockedUsers] = useState(true);
+    const [notificationOpen, setNotificationOpen] = useState(false);
+    const [processingId, setProcessingId] = useState<string | null>(null);
+    const [processingBlockedEmail, setProcessingBlockedEmail] = useState<string | null>(null);
+    const [requestError, setRequestError] = useState<string | null>(null);
+    const [requestMessage, setRequestMessage] = useState<string | null>(null);
+    const [blockedError, setBlockedError] = useState<string | null>(null);
+    const [blockedMessage, setBlockedMessage] = useState<string | null>(null);
+    const notificationRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        const loadPendingRequests = async () => {
+            setRequestError(null);
+
+            const response = await fetch("/api/admin/requests", {
+                method: "GET",
+                cache: "no-store",
+            });
+
+            const responseText = await response.text();
+            const result = (() => {
+                try {
+                    return JSON.parse(responseText) as { error?: string; requests?: PendingRequest[] };
+                } catch {
+                    return null;
+                }
+            })();
+
+            if (!response.ok) {
+                console.error("Failed to load pending requests", result ?? responseText);
+                setRequestError("Kon aanvragen niet ophalen.");
+                setIsLoadingRequests(false);
+                return;
+            }
+
+            setPendingRequests(result?.requests ?? []);
+            setIsLoadingRequests(false);
+        };
+
+        const loadBlockedUsers = async () => {
+            setBlockedError(null);
+
+            const response = await fetch("/api/admin/blocked-users", {
+                method: "GET",
+                cache: "no-store",
+            });
+
+            const responseText = await response.text();
+            const result = (() => {
+                try {
+                    return JSON.parse(responseText) as { error?: string; users?: BlockedUser[] };
+                } catch {
+                    return null;
+                }
+            })();
+
+            if (!response.ok) {
+                console.error("Failed to load blocked users", result ?? responseText);
+                setBlockedError("Kon geblokkeerde gebruikers niet ophalen.");
+                setIsLoadingBlockedUsers(false);
+                return;
+            }
+
+            setBlockedUsers(result?.users ?? []);
+            setIsLoadingBlockedUsers(false);
+        };
+
+        void loadPendingRequests();
+        void loadBlockedUsers();
+
+        const interval = window.setInterval(() => {
+            void loadPendingRequests();
+            void loadBlockedUsers();
+        }, 15000);
+
+        const handleFocus = () => {
+            void loadPendingRequests();
+            void loadBlockedUsers();
+        };
+
+        window.addEventListener("focus", handleFocus);
+
+        return () => {
+            window.clearInterval(interval);
+            window.removeEventListener("focus", handleFocus);
+        };
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (!notificationRef.current) return;
+
+            if (event.target instanceof Node && !notificationRef.current.contains(event.target)) {
+                setNotificationOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const handleRequestDecision = async (
+        requestEmail: string,
+        nextStatus: Exclude<RequestStatus, "pending">,
+    ) => {
+        setProcessingId(requestEmail);
+        setRequestError(null);
+        setRequestMessage(null);
+
+        const response = await fetch("/api/admin/requests", {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email: requestEmail, status: nextStatus }),
+        });
+
+        const responseText = await response.text();
+        const result = (() => {
+            try {
+                return JSON.parse(responseText) as { error?: string };
+            } catch {
+                return null;
+            }
+        })();
+
+        if (!response.ok) {
+            console.error(`Failed to update request to ${nextStatus}`, result ?? responseText);
+            setRequestError("Kon aanvraag niet bijwerken.");
+            setProcessingId(null);
+            return;
+        }
+
+        setPendingRequests((current) => current.filter((request) => request.email !== requestEmail));
+        setRequestMessage(nextStatus === "approved" ? "Aanvraag goedgekeurd." : "Aanvraag afgewezen.");
+        setProcessingId(null);
+
+        if (nextStatus === "denied") {
+            setBlockedUsers((current) => {
+                if (current.some((user) => user.email === requestEmail)) return current;
+                const deniedRequest = pendingRequests.find((request) => request.email === requestEmail);
+                if (!deniedRequest) return current;
+
+                return [
+                    {
+                        ...deniedRequest,
+                        blocked_status: true,
+                        status: "denied",
+                    },
+                    ...current,
+                ];
+            });
+        }
+    };
+
+    const handleUnblockUser = async (email: string) => {
+        setProcessingBlockedEmail(email);
+        setBlockedError(null);
+        setBlockedMessage(null);
+
+        const response = await fetch("/api/admin/blocked-users", {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email }),
+        });
+
+        const responseText = await response.text();
+        const result = (() => {
+            try {
+                return JSON.parse(responseText) as { error?: string };
+            } catch {
+                return null;
+            }
+        })();
+
+        if (!response.ok) {
+            console.error("Failed to unblock user", result ?? responseText);
+            setBlockedError(result?.error ?? "Kon gebruiker niet deblokkeren.");
+            setProcessingBlockedEmail(null);
+            return;
+        }
+
+        setBlockedUsers((current) => current.filter((user) => user.email !== email));
+        setBlockedMessage("Gebruiker is gedeblokkeerd.");
+        setProcessingBlockedEmail(null);
+    };
+
+    const pendingCount = pendingRequests.length;
+    const blockedCount = blockedUsers.length;
 
     return (
         <div
@@ -52,23 +290,177 @@ export default function AdminPage() {
                     "radial-gradient(circle at 12% 18%, rgba(232, 121, 249, 0.34) 0%, rgba(196, 181, 253, 0.20) 30%, rgba(255,255,255,0) 62%), radial-gradient(circle at 86% 12%, rgba(168, 85, 247, 0.34) 0%, rgba(129, 140, 248, 0.18) 34%, rgba(255,255,255,0) 62%), radial-gradient(circle at 50% 92%, rgba(217, 70, 239, 0.26) 0%, rgba(139, 92, 246, 0.14) 38%, rgba(255,255,255,0) 68%), linear-gradient(135deg, rgba(250, 245, 255, 1) 0%, rgba(237, 233, 254, 1) 38%, rgba(243, 232, 255, 1) 68%, rgba(253, 242, 248, 1) 100%)",
             }}
         >
-            <div className="mx-auto w-full max-w-6xl">
-                {/* Top bar */}
-                <div className="mb-6 rounded-xl border border-purple-200/35 bg-white/75 backdrop-blur">
-                    <div className="flex h-16 items-center px-6">
-                        <span className="text-sm font-semibold text-zinc-900">
-                            Admin page Desktop
+            <div className="fixed right-6 top-6 z-50" ref={notificationRef}>
+                <button
+                    type="button"
+                    onClick={() => setNotificationOpen((current) => !current)}
+                    className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-purple-200/60 bg-white/90 text-purple-700 shadow-lg shadow-purple-500/10 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white"
+                    aria-label="Toon toegangsverzoeken"
+                    aria-expanded={notificationOpen}
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        className="h-6 w-6"
+                        aria-hidden="true"
+                    >
+                        <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5" />
+                        <path d="M10 20a2 2 0 0 0 4 0" />
+                    </svg>
+                    {pendingCount > 0 && (
+                        <span className="absolute -right-1 -top-1 flex min-h-6 min-w-6 items-center justify-center rounded-full bg-rose-500 px-1.5 text-xs font-bold text-white">
+                            {pendingCount}
                         </span>
+                    )}
+                </button>
+
+                {notificationOpen && (
+                    <div className="mt-3 w-[24rem] rounded-3xl border border-purple-200/60 bg-white/95 p-4 shadow-2xl shadow-purple-500/15 backdrop-blur">
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <p className="text-sm font-semibold text-zinc-900">Aanvragen ter goedkeuring</p>
+                                <p className="mt-1 text-xs text-zinc-600">
+                                    {pendingCount === 0
+                                        ? "Geen openstaande verzoeken."
+                                        : `${pendingCount} openstaande ${pendingCount === 1 ? "aanvraag" : "aanvragen"}`}
+                                </p>
+                            </div>
+                            <span className="rounded-full bg-purple-100 px-2.5 py-1 text-xs font-semibold text-purple-700">
+                                Pending
+                            </span>
+                        </div>
+
+                        {(requestError || requestMessage) && (
+                            <div
+                                className={`mt-3 rounded-2xl px-3 py-2 text-xs ${
+                                    requestError
+                                        ? "bg-rose-50 text-rose-600 ring-1 ring-rose-200"
+                                        : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                                }`}
+                            >
+                                {requestError ?? requestMessage}
+                            </div>
+                        )}
+
+                        <div className="mt-4 max-h-[24rem] space-y-3 overflow-y-auto pr-1">
+                            {isLoadingRequests ? (
+                                <div className="rounded-2xl bg-purple-50/80 px-4 py-5 text-sm text-purple-700 ring-1 ring-purple-200/70">
+                                    Aanvragen laden...
+                                </div>
+                            ) : pendingCount === 0 ? (
+                                <div className="rounded-2xl bg-zinc-50 px-4 py-5 text-sm text-zinc-600 ring-1 ring-zinc-200">
+                                    Zodra nieuwe registraties binnenkomen, verschijnen ze hier automatisch.
+                                </div>
+                            ) : (
+                                pendingRequests.map((request) => {
+                                    const requestKey = request.email ?? String(request.id);
+                                    const isProcessing = processingId === request.email;
+
+                                    return (
+                                        <div
+                                            key={requestKey}
+                                            className="rounded-2xl border border-purple-200/60 bg-purple-50/45 p-4"
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <p className="text-sm font-semibold text-zinc-900">
+                                                        {request.username || request.email || "Nieuwe gebruiker"}
+                                                    </p>
+                                                    <p className="mt-1 text-xs text-zinc-600">{request.email || "Geen e-mail"}</p>
+                                                </div>
+                                                <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-purple-700 ring-1 ring-purple-200">
+                                                    {formatRoleLabel(request.type)}
+                                                </span>
+                                            </div>
+
+                                            <div className="mt-3 flex items-center justify-between gap-3 text-xs text-zinc-500">
+                                                <span>Aangemaakt {formatRequestDate(request.created_at)}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setActiveTab("access")}
+                                                    className="font-semibold text-purple-700 transition hover:text-purple-900"
+                                                >
+                                                    Bekijk
+                                                </button>
+                                            </div>
+
+                                            <div className="mt-4 flex items-center justify-end gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => request.email && void handleRequestDecision(request.email, "denied")}
+                                                    disabled={isProcessing || !request.email}
+                                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-rose-500 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                    aria-label={`Weiger ${request.username || request.email || "aanvraag"}`}
+                                                >
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        className="h-4 w-4"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <path d="M18 6 6 18" />
+                                                        <path d="m6 6 12 12" />
+                                                    </svg>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => request.email && void handleRequestDecision(request.email, "approved")}
+                                                    disabled={isProcessing || !request.email}
+                                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                                    aria-label={`Keur ${request.username || request.email || "aanvraag"} goed`}
+                                                >
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        className="h-4 w-4"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <path d="m5 12 5 5L20 7" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div className="mx-auto w-full max-w-6xl">
+                <div className="mb-6 rounded-xl border border-purple-200/35 bg-white/75 backdrop-blur">
+                    <div className="flex min-h-16 items-center justify-between gap-4 px-6 py-4">
+                        <div>
+                            <span className="text-sm font-semibold text-zinc-900">Admin page Desktop</span>
+                            <p className="mt-1 text-xs text-zinc-600">
+                                Beheer toegangsverzoeken en moderatie vanaf één overzicht.
+                            </p>
+                        </div>
+                        <div className="rounded-full bg-purple-100 px-3 py-1.5 text-xs font-semibold text-purple-700">
+                            {pendingCount} wachtend{pendingCount === 1 ? " verzoek" : "e verzoeken"}
+                        </div>
                     </div>
                 </div>
 
                 <div className="flex gap-6">
-                    {/* Sidebar */}
                     <aside className="w-64 rounded-xl border border-purple-200/35 bg-white/75 p-4 backdrop-blur">
                         <div className="mb-3 text-xs font-semibold text-purple-700/80">Tabs</div>
                         <div role="tablist" className="flex flex-col gap-2">
                             {adminTabs.map((tab) => {
                                 const isActive = tab.key === activeTab;
+                                const badgeCount =
+                                    tab.key === "access" ? pendingCount : tab.key === "users" ? blockedCount : null;
+
                                 return (
                                     <button
                                         key={tab.key}
@@ -78,38 +470,162 @@ export default function AdminPage() {
                                         onClick={() => setActiveTab(tab.key)}
                                         className={
                                             isActive
-                                                ? "rounded-lg bg-gradient-to-r from-purple-600 to-fuchsia-600 px-3 py-2 text-left text-sm font-semibold text-white shadow-md"
-                                                : "rounded-lg bg-white/60 px-3 py-2 text-left text-sm font-semibold text-purple-900/80 ring-1 ring-purple-200/70 hover:bg-white/80 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                                                ? "flex items-center justify-between rounded-lg bg-gradient-to-r from-purple-600 to-fuchsia-600 px-3 py-2 text-left text-sm font-semibold text-white shadow-md"
+                                                : "flex items-center justify-between rounded-lg bg-white/60 px-3 py-2 text-left text-sm font-semibold text-purple-900/80 ring-1 ring-purple-200/70 hover:bg-white/80 focus:outline-none focus:ring-2 focus:ring-purple-300"
                                         }
                                     >
-                                        {tab.label}
+                                        <span>{tab.label}</span>
+                                        {badgeCount !== null && badgeCount > 0 && (
+                                            <span className="rounded-full bg-white/90 px-2 py-0.5 text-xs font-bold text-purple-700">
+                                                {badgeCount}
+                                            </span>
+                                        )}
                                     </button>
                                 );
                             })}
                         </div>
                     </aside>
 
-                    {/* Main content */}
                     <main className="flex-1 rounded-xl border border-purple-200/35 bg-white/75 p-6 backdrop-blur">
                         <div className="space-y-4">
                             <div className="rounded-lg border border-purple-200/60 bg-white/60 p-4">
                                 <div className="text-sm font-semibold text-purple-700/90">
-                                    {adminTabs.find((t) => t.key === activeTab)?.label}
+                                    {adminTabs.find((tab) => tab.key === activeTab)?.label}
                                 </div>
                                 <div className="mt-1 text-xs text-zinc-600/80">
-                                    Voorbeelden van mogelijke situaties:
+                                    {activeTab === "access"
+                                        ? "Nieuwe gebruikers die nog goedkeuring nodig hebben."
+                                        : activeTab === "users"
+                                            ? "Overzicht van geblokkeerde gebruikers."
+                                        : "Voorbeelden van mogelijke situaties:"}
                                 </div>
 
-                                <ul className="mt-3 space-y-2 text-sm text-zinc-700/90">
-                                    {adminTabExamples[activeTab].map((example) => (
-                                        <li
-                                            key={example}
-                                            className="rounded-md bg-purple-50/70 px-3 py-2 ring-1 ring-purple-200/60"
-                                        >
-                                            {example}
-                                        </li>
-                                    ))}
-                                </ul>
+                                {activeTab === "access" ? (
+                                    <div className="mt-4 space-y-3">
+                                        {isLoadingRequests ? (
+                                            <div className="rounded-md bg-purple-50/70 px-3 py-3 text-sm text-purple-700 ring-1 ring-purple-200/60">
+                                                Aanvragen laden...
+                                            </div>
+                                        ) : pendingCount === 0 ? (
+                                            <div className="rounded-md bg-zinc-50 px-3 py-3 text-sm text-zinc-600 ring-1 ring-zinc-200">
+                                                Er staan momenteel geen toegangsverzoeken open.
+                                            </div>
+                                        ) : (
+                                            pendingRequests.map((request) => {
+                                                const requestKey = request.email ?? String(request.id);
+                                                const isProcessing = processingId === request.email;
+
+                                                return (
+                                                    <div
+                                                        key={requestKey}
+                                                        className="rounded-md bg-purple-50/70 px-4 py-3 ring-1 ring-purple-200/60"
+                                                    >
+                                                        <div className="flex items-start justify-between gap-3">
+                                                            <div>
+                                                                <p className="text-sm font-semibold text-zinc-900">
+                                                                    {request.username || request.email || "Nieuwe gebruiker"}
+                                                                </p>
+                                                                <p className="mt-1 text-xs text-zinc-600">
+                                                                    {request.email || "Geen e-mail"} · {formatRoleLabel(request.type)}
+                                                                </p>
+                                                                <p className="mt-1 text-xs text-zinc-500">
+                                                                    Aangemeld op {formatRequestDate(request.created_at)}
+                                                                </p>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => request.email && void handleRequestDecision(request.email, "denied")}
+                                                                    disabled={isProcessing || !request.email}
+                                                                    className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-rose-500 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                >
+                                                                    Weiger
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => request.email && void handleRequestDecision(request.email, "approved")}
+                                                                    disabled={isProcessing || !request.email}
+                                                                    className="rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                >
+                                                                    Accepteer
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                ) : activeTab === "users" ? (
+                                    <div className="mt-4 space-y-3">
+                                        {(blockedError || blockedMessage) && (
+                                            <div
+                                                className={`rounded-md px-3 py-3 text-sm ring-1 ${
+                                                    blockedError
+                                                        ? "bg-rose-50 text-rose-600 ring-rose-200"
+                                                        : "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                                                }`}
+                                            >
+                                                {blockedError ?? blockedMessage}
+                                            </div>
+                                        )}
+
+                                        {isLoadingBlockedUsers ? (
+                                            <div className="rounded-md bg-purple-50/70 px-3 py-3 text-sm text-purple-700 ring-1 ring-purple-200/60">
+                                                Geblokkeerde gebruikers laden...
+                                            </div>
+                                        ) : blockedCount === 0 ? (
+                                            <div className="rounded-md bg-zinc-50 px-3 py-3 text-sm text-zinc-600 ring-1 ring-zinc-200">
+                                                Er zijn momenteel geen geblokkeerde gebruikers.
+                                            </div>
+                                        ) : (
+                                            blockedUsers.map((user) => {
+                                                const userKey = user.email ?? String(user.id);
+                                                const isProcessingUnblock = processingBlockedEmail === user.email;
+
+                                                return (
+                                                    <div
+                                                        key={userKey}
+                                                        className="rounded-md bg-rose-50/60 px-4 py-3 ring-1 ring-rose-200/70"
+                                                    >
+                                                        <div className="flex items-start justify-between gap-3">
+                                                            <div>
+                                                                <p className="text-sm font-semibold text-zinc-900">
+                                                                    {user.username || user.email || "Geblokkeerde gebruiker"}
+                                                                </p>
+                                                                <p className="mt-1 text-xs text-zinc-600">
+                                                                    {user.email || "Geen e-mail"} · {formatRoleLabel(user.type)}
+                                                                </p>
+                                                                <p className="mt-1 text-xs text-zinc-500">
+                                                                    Geblokkeerd (status: {user.status})
+                                                                </p>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => user.email && void handleUnblockUser(user.email)}
+                                                                disabled={!user.email || isProcessingUnblock}
+                                                                className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                            >
+                                                                Deblokkeer
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                ) : (
+                                    <ul className="mt-3 space-y-2 text-sm text-zinc-700/90">
+                                        {adminTabExamples[activeTab].map((example) => (
+                                            <li
+                                                key={example}
+                                                className="rounded-md bg-purple-50/70 px-3 py-2 ring-1 ring-purple-200/60"
+                                            >
+                                                {example}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
 
                             <div className="h-12 rounded-lg bg-gradient-to-r from-purple-200/55 to-fuchsia-200/40 ring-1 ring-purple-300/25" />

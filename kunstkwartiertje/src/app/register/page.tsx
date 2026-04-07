@@ -53,6 +53,37 @@ export default function RegisterPage() {
       return;
     }
 
+    const statusResponse = await fetch('/api/users/status', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    const statusResponseText = await statusResponse.text();
+    const statusResult = (() => {
+      try {
+        return JSON.parse(statusResponseText) as {
+          error?: string;
+          status?: 'pending' | 'approved' | 'denied' | null;
+          blocked?: boolean;
+        };
+      } catch {
+        return null;
+      }
+    })();
+
+    if (!statusResponse.ok) {
+      setError(statusResult?.error || 'Kon accountstatus niet controleren.');
+      return;
+    }
+
+    if (statusResult?.blocked) {
+      setError('Dit account is geblokkeerd. Registreren is niet toegestaan.');
+      return;
+    }
+
     setLoading(true);
     setError('');
     setLastRegisterAttempt(now);
@@ -89,8 +120,42 @@ export default function RegisterPage() {
         return;
       }
 
+      const profileResponse = await fetch('/api/users/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          username,
+          type: role.toLowerCase(),
+        }),
+      });
+
+      if (!profileResponse.ok) {
+        const profileResponseText = await profileResponse.text();
+        const profileResult = (() => {
+          try {
+            return JSON.parse(profileResponseText) as { error?: string; blocked?: boolean };
+          } catch {
+            return null;
+          }
+        })();
+
+        console.error('Supabase users upsert error', profileResult ?? profileResponseText);
+        setError(
+          profileResult?.error ||
+            'Account aangemaakt, maar goedkeuringsverzoek opslaan is mislukt.',
+        );
+
+        if (profileResult?.blocked) {
+          await supabase.auth.signOut();
+        }
+        return;
+      }
+
       console.log('User successfully registered with ID:', data.user.id, 'and role:', role.toLowerCase());
-      safeNavigate('/login');
+      safeNavigate('/login?approval=pending');
     } catch (registerError) {
       console.error('Unexpected register error', registerError);
       setError('Onverwachte fout bij registratie. Probeer opnieuw.');

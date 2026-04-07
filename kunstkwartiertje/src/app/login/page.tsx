@@ -1,15 +1,34 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
 import { createClient } from "src/utils/supabase/client";
 
 const LoginPage = () => {
   const supabase = createClient();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const approvalStatus = searchParams.get("approval");
+
+  const approvalMessage = useMemo(() => {
+    if (approvalStatus === "blocked") {
+      return "Je account is geblokkeerd. Neem contact op met een admin.";
+    }
+
+    if (approvalStatus === "pending") {
+      return "Je account wacht nog op goedkeuring door een admin.";
+    }
+
+    if (approvalStatus === "denied") {
+      return "Je aanvraag is geweigerd. Neem contact op met een admin voor hulp.";
+    }
+
+    return "";
+  }, [approvalStatus]);
 
   const handleLogin = async () => {
     setLoading(true);
@@ -28,6 +47,56 @@ const LoginPage = () => {
 
     if (!data?.user?.id) {
       setError('Login mislukt, probeer opnieuw.');
+      setLoading(false);
+      return;
+    }
+
+    const profileResponse = await fetch("/api/users/status", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email: data.user.email ?? email }),
+    });
+
+    const profileResponseText = await profileResponse.text();
+    const profileResult = (() => {
+      try {
+        return JSON.parse(profileResponseText) as {
+          error?: string;
+          status?: "pending" | "approved" | "denied" | null;
+          blocked?: boolean;
+        };
+      } catch {
+        return null;
+      }
+    })();
+
+    if (!profileResponse.ok || !profileResult?.status) {
+      if (profileResult?.blocked) {
+        await supabase.auth.signOut();
+        setError("Je account is geblokkeerd. Inloggen is niet toegestaan.");
+        setLoading(false);
+        return;
+      }
+
+      console.error("User profile lookup error:", profileResult ?? profileResponseText);
+      await supabase.auth.signOut();
+      setError(profileResult?.error || "Je goedkeuringsstatus kon niet worden gecontroleerd.");
+      setLoading(false);
+      return;
+    }
+
+    if (profileResult.blocked) {
+      await supabase.auth.signOut();
+      setError("Je account is geblokkeerd. Inloggen is niet toegestaan.");
+      setLoading(false);
+      return;
+    }
+
+    if (profileResult.status === "pending") {
+      await supabase.auth.signOut();
+      setError("Je account wacht nog op goedkeuring door een admin.");
       setLoading(false);
       return;
     }
@@ -149,6 +218,7 @@ const LoginPage = () => {
           </a>
         </div>
 
+        {approvalMessage && !error && <p className="text-amber-600 text-sm">{approvalMessage}</p>}
         {error && <p className="text-red-500 text-sm">{error}</p>}
 
         <button
