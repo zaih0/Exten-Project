@@ -14,6 +14,19 @@ type PendingRequest = {
     created_at: string | null;
 };
 
+type ArtworkRequest = {
+    id: number;
+    user_id: string;
+    title: string;
+    description: string;
+    imageUrl: string;
+    status: RequestStatus;
+    created_at: string | null;
+    artist_email: string | null;
+    artist_username: string | null;
+    artist_type: string | null;
+};
+
 type BlockedUser = {
     id: string | number;
     email: string | null;
@@ -91,13 +104,17 @@ export default function AdminPage() {
     const [activeTab, setActiveTab] = useState<AdminTabKey>("access");
     const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
     const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
+    const [pendingArtworkRequests, setPendingArtworkRequests] = useState<ArtworkRequest[]>([]);
     const [isLoadingRequests, setIsLoadingRequests] = useState(true);
+    const [isLoadingArtworkRequests, setIsLoadingArtworkRequests] = useState(true);
     const [isLoadingBlockedUsers, setIsLoadingBlockedUsers] = useState(true);
     const [notificationOpen, setNotificationOpen] = useState(false);
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [processingBlockedEmail, setProcessingBlockedEmail] = useState<string | null>(null);
     const [requestError, setRequestError] = useState<string | null>(null);
     const [requestMessage, setRequestMessage] = useState<string | null>(null);
+    const [artworkError, setArtworkError] = useState<string | null>(null);
+    const [artworkMessage, setArtworkMessage] = useState<string | null>(null);
     const [blockedError, setBlockedError] = useState<string | null>(null);
     const [blockedMessage, setBlockedMessage] = useState<string | null>(null);
     const [allUsers, setAllUsers] = useState<BlockedUser[]>([]);
@@ -106,6 +123,8 @@ export default function AdminPage() {
     const [processingBlockEmail, setProcessingBlockEmail] = useState<string | null>(null);
     const [allUsersError, setAllUsersError] = useState<string | null>(null);
     const [allUsersMessage, setAllUsersMessage] = useState<string | null>(null);
+    const [processingArtworkId, setProcessingArtworkId] = useState<number | null>(null);
+    const [selectedArtwork, setSelectedArtwork] = useState<ArtworkRequest | null>(null);
     const notificationRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -165,8 +184,37 @@ export default function AdminPage() {
             setIsLoadingBlockedUsers(false);
         };
 
+        const loadPendingArtworkRequests = async () => {
+            setArtworkError(null);
+
+            const response = await fetch("/api/admin/requests?type=artworks", {
+                method: "GET",
+                cache: "no-store",
+            });
+
+            const responseText = await response.text();
+            const result = (() => {
+                try {
+                    return JSON.parse(responseText) as { error?: string; requests?: ArtworkRequest[] };
+                } catch {
+                    return null;
+                }
+            })();
+
+            if (!response.ok) {
+                console.error("Failed to load pending artwork requests", result ?? responseText);
+                setArtworkError("Kon kunstverzoeken niet ophalen.");
+                setIsLoadingArtworkRequests(false);
+                return;
+            }
+
+            setPendingArtworkRequests(result?.requests ?? []);
+            setIsLoadingArtworkRequests(false);
+        };
+
         void loadPendingRequests();
         void loadBlockedUsers();
+        void loadPendingArtworkRequests();
 
         const loadAllUsers = async () => {
             const response = await fetch("/api/admin/users", {
@@ -196,12 +244,14 @@ export default function AdminPage() {
 
         const interval = window.setInterval(() => {
             void loadPendingRequests();
+            void loadPendingArtworkRequests();
             void loadBlockedUsers();
             void loadAllUsers();
         }, 15000);
 
         const handleFocus = () => {
             void loadPendingRequests();
+            void loadPendingArtworkRequests();
             void loadBlockedUsers();
             void loadAllUsers();
         };
@@ -315,6 +365,44 @@ export default function AdminPage() {
         setProcessingBlockedEmail(null);
     };
 
+    const handleArtworkDecision = async (
+        artworkId: number,
+        nextStatus: Exclude<RequestStatus, "pending">,
+    ) => {
+        setProcessingArtworkId(artworkId);
+        setArtworkError(null);
+        setArtworkMessage(null);
+
+        const response = await fetch("/api/admin/requests", {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ requestType: "artwork", artworkId, status: nextStatus }),
+        });
+
+        const responseText = await response.text();
+        const result = (() => {
+            try {
+                return JSON.parse(responseText) as { error?: string };
+            } catch {
+                return null;
+            }
+        })();
+
+        if (!response.ok) {
+            console.error(`Failed to update artwork request to ${nextStatus}`, result ?? responseText);
+            setArtworkError("Kon kunstverzoek niet bijwerken.");
+            setProcessingArtworkId(null);
+            return;
+        }
+
+        setPendingArtworkRequests((current) => current.filter((request) => request.id !== artworkId));
+        setSelectedArtwork((current) => (current?.id === artworkId ? null : current));
+        setArtworkMessage(nextStatus === "approved" ? "Kunstwerk goedgekeurd." : "Kunstwerk afgewezen.");
+        setProcessingArtworkId(null);
+    };
+
     const handleBlockUser = async (email: string) => {
         setProcessingBlockEmail(email);
         setAllUsersError(null);
@@ -358,7 +446,9 @@ export default function AdminPage() {
         setProcessingBlockEmail(null);
     };
 
-    const pendingCount = pendingRequests.length;
+    const accountPendingCount = pendingRequests.length;
+    const artworkPendingCount = pendingArtworkRequests.length;
+    const pendingCount = accountPendingCount + artworkPendingCount;
     const blockedCount = blockedUsers.length;
 
     return (
@@ -412,109 +502,285 @@ export default function AdminPage() {
                             </span>
                         </div>
 
-                        {(requestError || requestMessage) && (
-                            <div
-                                className={`mt-3 rounded-2xl px-3 py-2 text-xs ${
-                                    requestError
-                                        ? "bg-rose-50 text-rose-600 ring-1 ring-rose-200"
-                                        : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                                }`}
-                            >
-                                {requestError ?? requestMessage}
+                        {(requestError || requestMessage || artworkError || artworkMessage) && (
+                            <div className="mt-3 space-y-2">
+                                {(requestError || requestMessage) && (
+                                    <div
+                                        className={`rounded-2xl px-3 py-2 text-xs ${
+                                            requestError
+                                                ? "bg-rose-50 text-rose-600 ring-1 ring-rose-200"
+                                                : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                                        }`}
+                                    >
+                                        {requestError ?? requestMessage}
+                                    </div>
+                                )}
+                                {(artworkError || artworkMessage) && (
+                                    <div
+                                        className={`rounded-2xl px-3 py-2 text-xs ${
+                                            artworkError
+                                                ? "bg-rose-50 text-rose-600 ring-1 ring-rose-200"
+                                                : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                                        }`}
+                                    >
+                                        {artworkError ?? artworkMessage}
+                                    </div>
+                                )}
                             </div>
                         )}
 
                         <div className="mt-4 max-h-[24rem] space-y-3 overflow-y-auto pr-1">
-                            {isLoadingRequests ? (
+                            {isLoadingRequests || isLoadingArtworkRequests ? (
                                 <div className="rounded-2xl bg-purple-50/80 px-4 py-5 text-sm text-purple-700 ring-1 ring-purple-200/70">
                                     Aanvragen laden...
                                 </div>
                             ) : pendingCount === 0 ? (
                                 <div className="rounded-2xl bg-zinc-50 px-4 py-5 text-sm text-zinc-600 ring-1 ring-zinc-200">
-                                    Zodra nieuwe registraties binnenkomen, verschijnen ze hier automatisch.
+                                    Zodra nieuwe registraties of kunstwerken binnenkomen, verschijnen ze hier automatisch.
                                 </div>
                             ) : (
-                                pendingRequests.map((request) => {
-                                    const requestKey = request.email ?? String(request.id);
-                                    const isProcessing = processingId === request.email;
+                                <>
+                                    {pendingRequests.map((request) => {
+                                        const requestKey = request.email ?? String(request.id);
+                                        const isProcessing = processingId === request.email;
 
-                                    return (
-                                        <div
-                                            key={requestKey}
-                                            className="rounded-2xl border border-purple-200/60 bg-purple-50/45 p-4"
-                                        >
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div>
-                                                    <p className="text-sm font-semibold text-zinc-900">
-                                                        {request.username || request.email || "Nieuwe gebruiker"}
-                                                    </p>
-                                                    <p className="mt-1 text-xs text-zinc-600">{request.email || "Geen e-mail"}</p>
+                                        return (
+                                            <div
+                                                key={`user-${requestKey}`}
+                                                className="rounded-2xl border border-purple-200/60 bg-purple-50/45 p-4"
+                                            >
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-zinc-900">
+                                                            {request.username || request.email || "Nieuwe gebruiker"}
+                                                        </p>
+                                                        <p className="mt-1 text-xs text-zinc-600">{request.email || "Geen e-mail"}</p>
+                                                    </div>
+                                                    <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-purple-700 ring-1 ring-purple-200">
+                                                        Account · {formatRoleLabel(request.type)}
+                                                    </span>
                                                 </div>
-                                                <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-purple-700 ring-1 ring-purple-200">
-                                                    {formatRoleLabel(request.type)}
-                                                </span>
-                                            </div>
 
-                                            <div className="mt-3 flex items-center justify-between gap-3 text-xs text-zinc-500">
-                                                <span>Aangemaakt {formatRequestDate(request.created_at)}</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setActiveTab("access")}
-                                                    className="font-semibold text-purple-700 transition hover:text-purple-900"
-                                                >
-                                                    Bekijk
-                                                </button>
-                                            </div>
+                                                <div className="mt-3 flex items-center justify-between gap-3 text-xs text-zinc-500">
+                                                    <span>Aangemaakt {formatRequestDate(request.created_at)}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setActiveTab("access")}
+                                                        className="font-semibold text-purple-700 transition hover:text-purple-900"
+                                                    >
+                                                        Bekijk
+                                                    </button>
+                                                </div>
 
-                                            <div className="mt-4 flex items-center justify-end gap-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => request.email && void handleRequestDecision(request.email, "denied")}
-                                                    disabled={isProcessing || !request.email}
-                                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-rose-500 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
-                                                    aria-label={`Weiger ${request.username || request.email || "aanvraag"}`}
-                                                >
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        viewBox="0 0 24 24"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        strokeWidth="2"
-                                                        className="h-4 w-4"
-                                                        aria-hidden="true"
+                                                <div className="mt-4 flex items-center justify-end gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => request.email && void handleRequestDecision(request.email, "denied")}
+                                                        disabled={isProcessing || !request.email}
+                                                        className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-rose-500 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                        aria-label={`Weiger ${request.username || request.email || "aanvraag"}`}
                                                     >
-                                                        <path d="M18 6 6 18" />
-                                                        <path d="m6 6 12 12" />
-                                                    </svg>
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => request.email && void handleRequestDecision(request.email, "approved")}
-                                                    disabled={isProcessing || !request.email}
-                                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
-                                                    aria-label={`Keur ${request.username || request.email || "aanvraag"} goed`}
-                                                >
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        viewBox="0 0 24 24"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        strokeWidth="2"
-                                                        className="h-4 w-4"
-                                                        aria-hidden="true"
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                            className="h-4 w-4"
+                                                            aria-hidden="true"
+                                                        >
+                                                            <path d="M18 6 6 18" />
+                                                            <path d="m6 6 12 12" />
+                                                        </svg>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => request.email && void handleRequestDecision(request.email, "approved")}
+                                                        disabled={isProcessing || !request.email}
+                                                        className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                                        aria-label={`Keur ${request.username || request.email || "aanvraag"} goed`}
                                                     >
-                                                        <path d="m5 12 5 5L20 7" />
-                                                    </svg>
-                                                </button>
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                            className="h-4 w-4"
+                                                            aria-hidden="true"
+                                                        >
+                                                            <path d="m5 12 5 5L20 7" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
                                             </div>
-                                        </div>
-                                    );
-                                })
+                                        );
+                                    })}
+
+                                    {pendingArtworkRequests.map((artwork) => {
+                                        const isProcessing = processingArtworkId === artwork.id;
+
+                                        return (
+                                            <div
+                                                key={`artwork-${artwork.id}`}
+                                                className="rounded-2xl border border-fuchsia-200/70 bg-fuchsia-50/45 p-4"
+                                            >
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-zinc-900">{artwork.title}</p>
+                                                        <p className="mt-1 text-xs text-zinc-600">
+                                                            Door {artwork.artist_username || artwork.artist_email || "Onbekende artiest"}
+                                                        </p>
+                                                    </div>
+                                                    <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-fuchsia-700 ring-1 ring-fuchsia-200">
+                                                        Kunstwerk
+                                                    </span>
+                                                </div>
+
+                                                <div className="mt-3 flex items-center justify-between gap-3 text-xs text-zinc-500">
+                                                    <span>Ingediend {formatRequestDate(artwork.created_at)}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setActiveTab("kunst");
+                                                            setSelectedArtwork(artwork);
+                                                        }}
+                                                        className="font-semibold text-fuchsia-700 transition hover:text-fuchsia-900"
+                                                    >
+                                                        Bekijk
+                                                    </button>
+                                                </div>
+
+                                                <div className="mt-4 flex items-center justify-end gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => void handleArtworkDecision(artwork.id, "denied")}
+                                                        disabled={isProcessing}
+                                                        className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-rose-500 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                        aria-label={`Weiger ${artwork.title}`}
+                                                    >
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                            className="h-4 w-4"
+                                                            aria-hidden="true"
+                                                        >
+                                                            <path d="M18 6 6 18" />
+                                                            <path d="m6 6 12 12" />
+                                                        </svg>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => void handleArtworkDecision(artwork.id, "approved")}
+                                                        disabled={isProcessing}
+                                                        className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                                        aria-label={`Keur ${artwork.title} goed`}
+                                                    >
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                            className="h-4 w-4"
+                                                            aria-hidden="true"
+                                                        >
+                                                            <path d="m5 12 5 5L20 7" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </>
                             )}
                         </div>
                     </div>
                 )}
             </div>
+
+            {selectedArtwork && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) setSelectedArtwork(null);
+                    }}
+                >
+                    <div className="w-full max-w-2xl rounded-3xl border border-purple-200/60 bg-white p-6 shadow-2xl shadow-purple-500/20">
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <p className="text-lg font-semibold text-zinc-900">{selectedArtwork.title}</p>
+                                <p className="mt-1 text-xs text-zinc-500">
+                                    Door {selectedArtwork.artist_username || selectedArtwork.artist_email || "Onbekende artiest"}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setSelectedArtwork(null)}
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 transition hover:bg-zinc-200"
+                                aria-label="Sluiten"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    className="h-4 w-4"
+                                    aria-hidden="true"
+                                >
+                                    <path d="M18 6 6 18" />
+                                    <path d="m6 6 12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {selectedArtwork.imageUrl ? (
+                            <img
+                                src={selectedArtwork.imageUrl}
+                                alt={selectedArtwork.title}
+                                className="mt-4 max-h-[24rem] w-full rounded-xl object-cover ring-1 ring-purple-200/60"
+                            />
+                        ) : (
+                            <div className="mt-4 rounded-xl bg-zinc-50 px-4 py-10 text-center text-sm text-zinc-500 ring-1 ring-zinc-200">
+                                Geen afbeelding beschikbaar.
+                            </div>
+                        )}
+
+                        <div className="mt-4 grid gap-2">
+                            <div className="rounded-lg bg-zinc-50 px-3 py-2.5 text-sm text-zinc-700 ring-1 ring-zinc-200">
+                                {selectedArtwork.description || "Geen beschrijving opgegeven."}
+                            </div>
+                            <div className="flex items-center justify-between rounded-lg bg-zinc-50 px-3 py-2.5 text-xs text-zinc-600 ring-1 ring-zinc-200">
+                                <span>Ingediend</span>
+                                <span className="font-semibold text-zinc-800">{formatRequestDate(selectedArtwork.created_at)}</span>
+                            </div>
+                        </div>
+
+                        <div className="mt-5 flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => void handleArtworkDecision(selectedArtwork.id, "denied")}
+                                disabled={processingArtworkId === selectedArtwork.id}
+                                className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-600 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                Weiger
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void handleArtworkDecision(selectedArtwork.id, "approved")}
+                                disabled={processingArtworkId === selectedArtwork.id}
+                                className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                Accepteer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {selectedUser && (
                 <div
@@ -649,7 +915,13 @@ export default function AdminPage() {
                             {adminTabs.map((tab) => {
                                 const isActive = tab.key === activeTab;
                                 const badgeCount =
-                                    tab.key === "access" ? pendingCount : tab.key === "users" ? blockedCount : null;
+                                    tab.key === "access"
+                                        ? accountPendingCount
+                                        : tab.key === "kunst"
+                                            ? artworkPendingCount
+                                            : tab.key === "users"
+                                                ? blockedCount
+                                                : null;
 
                                 return (
                                     <button
@@ -685,6 +957,8 @@ export default function AdminPage() {
                                 <div className="mt-1 text-xs text-zinc-600/80">
                                     {activeTab === "access"
                                         ? "Nieuwe gebruikers die nog goedkeuring nodig hebben."
+                                        : activeTab === "kunst"
+                                            ? "Nieuwe kunstwerken die nog goedkeuring nodig hebben."
                                         : activeTab === "users"
                                             ? "Overzicht van geblokkeerde gebruikers."
                                             : activeTab === "allusers"
@@ -698,7 +972,7 @@ export default function AdminPage() {
                                             <div className="rounded-md bg-purple-50/70 px-3 py-3 text-sm text-purple-700 ring-1 ring-purple-200/60">
                                                 Aanvragen laden...
                                             </div>
-                                        ) : pendingCount === 0 ? (
+                                        ) : accountPendingCount === 0 ? (
                                             <div className="rounded-md bg-zinc-50 px-3 py-3 text-sm text-zinc-600 ring-1 ring-zinc-200">
                                                 Er staan momenteel geen toegangsverzoeken open.
                                             </div>
@@ -737,6 +1011,78 @@ export default function AdminPage() {
                                                                     type="button"
                                                                     onClick={() => request.email && void handleRequestDecision(request.email, "approved")}
                                                                     disabled={isProcessing || !request.email}
+                                                                    className="rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                >
+                                                                    Accepteer
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                ) : activeTab === "kunst" ? (
+                                    <div className="mt-4 space-y-3">
+                                        {(artworkError || artworkMessage) && (
+                                            <div
+                                                className={`rounded-md px-3 py-3 text-sm ring-1 ${
+                                                    artworkError
+                                                        ? "bg-rose-50 text-rose-600 ring-rose-200"
+                                                        : "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                                                }`}
+                                            >
+                                                {artworkError ?? artworkMessage}
+                                            </div>
+                                        )}
+
+                                        {isLoadingArtworkRequests ? (
+                                            <div className="rounded-md bg-purple-50/70 px-3 py-3 text-sm text-purple-700 ring-1 ring-purple-200/60">
+                                                Kunstverzoeken laden...
+                                            </div>
+                                        ) : artworkPendingCount === 0 ? (
+                                            <div className="rounded-md bg-zinc-50 px-3 py-3 text-sm text-zinc-600 ring-1 ring-zinc-200">
+                                                Er staan momenteel geen kunstverzoeken open.
+                                            </div>
+                                        ) : (
+                                            pendingArtworkRequests.map((artwork) => {
+                                                const isProcessingArtwork = processingArtworkId === artwork.id;
+
+                                                return (
+                                                    <div
+                                                        key={artwork.id}
+                                                        className="rounded-md bg-fuchsia-50/60 px-4 py-3 ring-1 ring-fuchsia-200/70"
+                                                    >
+                                                        <div className="flex items-start justify-between gap-3">
+                                                            <div>
+                                                                <p className="text-sm font-semibold text-zinc-900">{artwork.title}</p>
+                                                                <p className="mt-1 text-xs text-zinc-600">
+                                                                    {artwork.artist_username || artwork.artist_email || "Onbekende artiest"}
+                                                                </p>
+                                                                <p className="mt-1 text-xs text-zinc-500">
+                                                                    Ingediend op {formatRequestDate(artwork.created_at)}
+                                                                </p>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setSelectedArtwork(artwork)}
+                                                                    className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-fuchsia-700 ring-1 ring-fuchsia-200 transition hover:bg-fuchsia-50"
+                                                                >
+                                                                    Bekijk details
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => void handleArtworkDecision(artwork.id, "denied")}
+                                                                    disabled={isProcessingArtwork}
+                                                                    className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-rose-500 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                >
+                                                                    Weiger
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => void handleArtworkDecision(artwork.id, "approved")}
+                                                                    disabled={isProcessingArtwork}
                                                                     className="rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
                                                                 >
                                                                     Accepteer

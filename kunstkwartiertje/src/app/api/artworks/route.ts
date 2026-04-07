@@ -1,16 +1,38 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "src/utils/supabase/admin";
 
+type ArtworkStatus = "pending" | "approved" | "denied";
+
 export async function GET(request: Request) {
     const url = new URL(request.url);
     const email = url.searchParams.get("email")?.trim();
-
-    if (!email) {
-        return NextResponse.json({ error: "Missing email query param." }, { status: 400 });
-    }
+    const includeAll = url.searchParams.get("includeAll") === "true";
 
     try {
         const supabase = createAdminClient();
+
+        if (!email) {
+            const { data, error } = await supabase
+                .from("artworks")
+                .select("id, title, description, images, status, created_at")
+                .eq("status", "approved")
+                .order("created_at", { ascending: false });
+
+            if (error) {
+                return NextResponse.json({ error: error.message }, { status: 500 });
+            }
+
+            const artworks = (data ?? []).map((item) => ({
+                id: item.id,
+                title: item.title,
+                description: item.description,
+                imageUrl: Array.isArray(item.images) ? (item.images[0] ?? "") : (item.images ?? ""),
+                status: (item.status ?? "approved") as ArtworkStatus,
+                created_at: item.created_at ?? null,
+            }));
+
+            return NextResponse.json({ artworks });
+        }
 
         const { data: artistUser, error: artistLookupError } = await supabase
             .from("users")
@@ -26,11 +48,16 @@ export async function GET(request: Request) {
             return NextResponse.json({ artworks: [] });
         }
 
-        const { data, error } = await supabase
+        let query = supabase
             .from("artworks")
-            .select("id, title, description, images")
-            .eq("user_id", artistUser.id)
-            .order("id", { ascending: false });
+            .select("id, title, description, images, status, created_at")
+            .eq("user_id", artistUser.id);
+
+        if (!includeAll) {
+            query = query.eq("status", "approved");
+        }
+
+        const { data, error } = await query.order("created_at", { ascending: false });
 
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 500 });
@@ -41,6 +68,8 @@ export async function GET(request: Request) {
             title: item.title,
             description: item.description,
             imageUrl: Array.isArray(item.images) ? (item.images[0] ?? "") : (item.images ?? ""),
+            status: (item.status ?? "approved") as ArtworkStatus,
+            created_at: item.created_at ?? null,
         }));
 
         return NextResponse.json({ artworks });
@@ -117,6 +146,7 @@ export async function POST(request: Request) {
                 description,
                 images: imageUrl,
                 user_id: artistUser.id,
+                status: "pending",
             })
             .select()
             .single();
@@ -137,6 +167,7 @@ export async function POST(request: Request) {
                 title: data.title,
                 description: data.description,
                 imageUrl: artworkImage,
+                status: (data.status ?? "pending") as ArtworkStatus,
             },
         });
     } catch (error) {

@@ -9,6 +9,7 @@ type Artwork = {
     title: string;
     imageUrl: string;
     description: string;
+    status?: "pending" | "approved" | "denied";
 };
 
 export default function ArtistEditPage() {
@@ -25,6 +26,7 @@ export default function ArtistEditPage() {
     const [uploadPreview, setUploadPreview] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
+    const [uploadMessage, setUploadMessage] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     useEffect(() => {
@@ -47,7 +49,7 @@ export default function ArtistEditPage() {
                 return;
             }
 
-            const response = await fetch(`/api/artworks?email=${encodeURIComponent(user.email)}`, {
+            const response = await fetch(`/api/artworks?email=${encodeURIComponent(user.email)}&includeAll=true`, {
                 method: "GET",
                 cache: "no-store",
             });
@@ -125,6 +127,7 @@ export default function ArtistEditPage() {
 
         setIsUploading(true);
         setUploadError(null);
+        setUploadMessage(null);
 
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -152,7 +155,7 @@ export default function ArtistEditPage() {
             try {
                 return JSON.parse(responseText) as {
                     error?: string;
-                    artwork?: { id: number; title: string; imageUrl: string; description: string };
+                    artwork?: { id: number; title: string; imageUrl: string; description: string; status?: "pending" | "approved" | "denied" };
                 };
             } catch {
                 return null;
@@ -173,9 +176,12 @@ export default function ArtistEditPage() {
                     title: result.artwork!.title,
                     imageUrl: result.artwork!.imageUrl,
                     description: result.artwork!.description ?? "",
+                    status: result.artwork!.status ?? "pending",
                 },
             ]);
         }
+
+        setUploadMessage("Kunstwerk geüpload. Het wordt zichtbaar na goedkeuring door een admin.");
 
         setIsUploading(false);
         closeUploadModal();
@@ -265,6 +271,12 @@ export default function ArtistEditPage() {
                         </div>
 
                         <div className="space-y-4">
+                            {uploadMessage && (
+                                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                                    {uploadMessage}
+                                </div>
+                            )}
+
                             {isLoadingArtworks ? (
                                 <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700">
                                     Kunstwerken laden...
@@ -292,6 +304,25 @@ export default function ArtistEditPage() {
                                         </div>
 
                                         <div className="md:col-span-8 grid gap-3">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <span className="text-xs font-semibold text-gray-500">Moderatie status</span>
+                                                <span
+                                                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${
+                                                        artwork.status === "approved"
+                                                            ? "bg-emerald-100 text-emerald-700 ring-emerald-200"
+                                                            : artwork.status === "denied"
+                                                                ? "bg-rose-100 text-rose-700 ring-rose-200"
+                                                                : "bg-amber-100 text-amber-700 ring-amber-200"
+                                                    }`}
+                                                >
+                                                    {artwork.status === "approved"
+                                                        ? "Goedgekeurd"
+                                                        : artwork.status === "denied"
+                                                            ? "Afgewezen"
+                                                            : "Wacht op goedkeuring"}
+                                                </span>
+                                            </div>
+
                                             <input
                                                 type="text"
                                                 value={artwork.title}
