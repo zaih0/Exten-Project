@@ -16,8 +16,28 @@ export default function RegisterPage() {
   const [role, setRole] = useState('begeleider');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [lastRegisterAttempt, setLastRegisterAttempt] = useState<number | null>(null);
+  const [nextAllowedRegisterAt, setNextAllowedRegisterAt] = useState<number | null>(null);
 
   const handleRegister = async () => {
+    if (loading) {
+      return;
+    }
+
+    const now = Date.now();
+
+    if (nextAllowedRegisterAt && now < nextAllowedRegisterAt) {
+      const waitSeconds = Math.ceil((nextAllowedRegisterAt - now) / 1000);
+      setError(`Te veel aanvragen: wacht ${waitSeconds} seconden en probeer opnieuw.`);
+      return;
+    }
+
+    if (lastRegisterAttempt && now - lastRegisterAttempt < 60000) {
+      console.log('Rate limit check:', { lastRegisterAttempt, now, timeDifference: now - lastRegisterAttempt });
+      setError('Wacht een minuut voordat je opnieuw probeert te registreren.');
+      return;
+    }
+
     if (!username || !email || !password) {
       setError('Vul alle velden in.');
       return;
@@ -25,6 +45,26 @@ export default function RegisterPage() {
 
     setLoading(true);
     setError('');
+    setLastRegisterAttempt(now);
+
+    const { data: existingUser, error: existingUserError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (existingUserError) {
+      console.error('Supabase user lookup error', existingUserError);
+      setError('Kan gebruikerscontrole niet voltooien, probeer opnieuw.');
+      setLoading(false);
+      return;
+    }
+
+    if (existingUser) {
+      setError('Account bestaat al met dit e-mailadres.');
+      setLoading(false);
+      return;
+    }
 
     const { data, error: authError } = await supabase.auth.signUp({
       email,
@@ -32,13 +72,17 @@ export default function RegisterPage() {
     });
 
     if (authError) {
-      if (authError.message.toLowerCase().includes('rate limit')) {
+      console.error('Supabase signUp error', authError);
+
+      if (authError.status === 429 || authError.message.toLowerCase().includes('rate limit')) {
+        setNextAllowedRegisterAt(Date.now() + 60000);
         setError('Te veel verzoeken: probeer het over 1 minuut opnieuw.');
-      } else if (authError.message.includes('User already registered')) {
+      } else if (authError.message.toLowerCase().includes('already registered')) {
         setError('Account bestaat al');
       } else {
-        setError(authError.message);
+        setError(authError.message || 'Onverwachte fout bij registratie.');
       }
+
       setLoading(false);
       return;
     }
@@ -52,7 +96,6 @@ export default function RegisterPage() {
     const { error: insertError } = await supabase.from('users').insert({
       username,
       email,
-      password,
       type: role.toLowerCase(),
       blocked_status: false,
       phone_number: null,
@@ -64,7 +107,7 @@ export default function RegisterPage() {
       return;
     }
 
-    router.push('/dashboard');
+    router.push('/login');
     setLoading(false);
   };
 

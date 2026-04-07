@@ -1,74 +1,170 @@
-// login screen
 "use client";
 
-import { FormEvent, useState } from "react";
+import Image from "next/image";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "../../lib/supabaseClient";
 
-export default function login() {
-  const [role, setRole] = useState<"klant" | "artiest">("klant");
+const LoginPage = () => {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const username = formData.get("username");
-    const password = formData.get("password");
+  const handleLogin = async () => {
+    setLoading(true);
+    setError("");
 
-    console.log("Login payload:", { username, password, role });
-    alert("Login (demo)! Check console for submitted values");
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message || "Inloggen is mislukt. Probeer opnieuw.");
+      setLoading(false);
+      return;
+    }
+
+    // Verwijs naar de hoofdpagina of een begeleider-dashboard route
+    router.push("/");
+  };
+
+  const handleOAuthLogin = async (provider: "google" | "apple") => {
+    setLoading(true);
+    setError("");
+
+    const { error } = await supabase.auth.signInWithOAuth({ provider });
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+      return;
+    }
+
+    // OAuth redirect wordt door Supabase afgevangen
+    setLoading(false);
   };
 
   return (
-    <div
-      className="flex flex-col min-h-screen items-center justify-center font-sans text-zinc-900"
-      style={{
-        backgroundImage:
-          "radial-gradient(circle at 12% 18%, rgba(232, 121, 249, 0.34) 0%, rgba(196, 181, 253, 0.20) 30%, rgba(255,255,255,0) 62%), radial-gradient(circle at 86% 12%, rgba(168, 85, 247, 0.34) 0%, rgba(129, 140, 248, 0.18) 34%, rgba(255,255,255,0) 62%), radial-gradient(circle at 50% 92%, rgba(217, 70, 239, 0.26) 0%, rgba(139, 92, 246, 0.14) 38%, rgba(255,255,255,0) 68%), linear-gradient(135deg, rgba(250, 245, 255, 1) 0%, rgba(237, 233, 254, 1) 38%, rgba(243, 232, 255, 1) 68%, rgba(253, 242, 248, 1) 100%)",
-      }}
-    >
-      <h1
-        className="mb-5 text-center text-4xl font-extrabold tracking-tight"
-        style={{
-          color: "#ffffff",
-          WebkitTextStroke: "2px rgb(147 51 234)",
-          textShadow:
-            "0 1px 0 rgba(147,51,234,0.25), 0 12px 30px rgba(147,51,234,0.20)",
-        }}
-      >
-        Login
-      </h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-6">
+        <div className="text-center">
+          <Image
+            src="/kunstkwartiertje-logo.png"
+            alt="Kunstkwartiertje"
+            width={300}
+            height={200}
+            className="mx-auto mb-2"
+          />
+          <h1 className="text-2xl font-bold text-gray-900">Log in</h1>
+        </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-2xl bg-white/88 p-6 shadow-xl backdrop-blur ring-1 ring-purple-200/80"
-      >
-        <input
-          type="text"
-          placeholder="Username"
-          name="username"
-          className="border border-purple-200 rounded px-4 py-2 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-200"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          name="password"
-          className="border border-purple-200 rounded px-4 py-2 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-200"
-        />
-        <select
-          name="role"
-          value={role}
-          onChange={(e) => setRole(e.target.value as "klant" | "artiest")}
-          className="border border-purple-200 rounded px-4 py-2 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-200"
-          required
-        >
-          <option value="klant">Klant</option>
-          <option value="artiest">Artiest</option>
-        </select>
+        <div className="rounded-md shadow-sm -space-y-px">
+          <div>
+            <label htmlFor="email" className="sr-only">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              placeholder="email@domain.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-black focus:border-black sm:text-sm"
+            />
+          </div>
+          <div className="mt-4">
+            <label htmlFor="password" className="sr-only">
+              Wachtwoord
+            </label>
+            <input
+              id="password"
+              type="password"
+              placeholder="Wachtwoord..."
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-black focus:border-black sm:text-sm"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-between text-sm mt-2">
+          <a
+            href="/wachtwoord-vergeten"
+            className="text-gray-600 hover:text-gray-900"
+          >
+            Wachtwoord vergeten?
+          </a>
+          <a href="/admin" className="text-gray-600 hover:text-gray-900">
+            Admin?
+          </a>
+        </div>
+
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+
         <button
-          type="submit"
-          className="bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white rounded px-4 py-2 hover:from-purple-700 hover:to-fuchsia-700 transition-colors"
+          type="button"
+          onClick={handleLogin}
+          disabled={loading}
+          className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black mt-4"
         >
-          Login
+          {loading ? "Loading..." : "Ga verder"}
         </button>
-      </form>
+
+        <div className="flex items-center my-4">
+          <div className="flex-grow border-t border-gray-300" />
+          <span className="px-2 text-gray-500 text-sm">of</span>
+          <div className="flex-grow border-t border-gray-300" />
+        </div>
+
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => handleOAuthLogin("google")}
+            className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <Image
+              src="/google-logo.png"
+              alt="Google"
+              width={20}
+              height={20}
+              className="mr-2"
+            />
+            Continue with Google
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleOAuthLogin("apple")}
+            className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <Image
+              src="/apple-logo.png"
+              alt="Apple"
+              width={20}
+              height={20}
+              className="mr-2"
+            />
+            Continue with Apple
+          </button>
+        </div>
+
+        <p className="mt-4 text-center text-xs text-gray-500">
+          By clicking continue, you agree to our{" "}
+          <a href="/terms" className="underline">
+            Terms of Service
+          </a>{" "}
+          and{" "}
+          <a href="/privacy" className="underline">
+            Privacy Policy
+          </a>
+          .
+        </p>
+      </div>
     </div>
   );
-}
+};
+
+export default LoginPage;
