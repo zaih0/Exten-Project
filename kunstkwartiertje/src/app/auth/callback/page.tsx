@@ -2,48 +2,43 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../../../lib/supabaseClient';
+import { createClient } from 'src/utils/supabase/client';
 
 export default function AuthCallback() {
   const router = useRouter();
 
+  const safeNavigate = (path: string) => {
+    router.replace(path);
+
+    window.setTimeout(() => {
+      if (window.location.pathname !== path) {
+        window.location.assign(path);
+      }
+    }, 1500);
+  };
+
   useEffect(() => {
     const handleAuthCallback = async () => {
+      const supabase = createClient();
       const { data, error } = await supabase.auth.getSession();
 
       if (error) {
         console.error('Auth callback error:', error);
-        router.push('/login');
+        safeNavigate('/login');
         return;
       }
 
       if (data.session?.user) {
-        const email = data.session.user.email;
-        if (email) {
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('type')
-            .eq('email', email)
-            .single();
+        const role = data.session.user.user_metadata?.type;
+        let redirectPath = '/';
 
-          if (userError) {
-            console.error('Error fetching user data:', userError);
-            router.push('/');
-            return;
-          }
+        if (role === 'begeleider') redirectPath = '/profile/accompanist';
+        else if (role === 'ondernemer') redirectPath = '/profile/entrepreneur';
+        else if (role === 'kunstenaar') redirectPath = '/profile/artist';
 
-          const role = userData.type;
-          let redirectPath = '/';
-          if (role === 'begeleider') redirectPath = '/profile/accompanist';
-          else if (role === 'ondernemer') redirectPath = '/profile/entrepreneur';
-          else if (role === 'kunstenaar') redirectPath = '/profile/artist';
-
-          router.push(redirectPath);
-        } else {
-          router.push('/');
-        }
+        safeNavigate(redirectPath);
       } else {
-        router.push('/login');
+        safeNavigate('/login');
       }
     };
 

@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import useCurrentUserProfile from "src/app/components/profile/useCurrentUserProfile";
 
 export default function ArtistProfile() {
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
+    const { username } = useCurrentUserProfile();
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -46,7 +48,7 @@ export default function ArtistProfile() {
                         </div>
                         
                         <div className="grow text-center md:text-left">
-                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Artist Name</h1>
+                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{username}</h1>
                             <br />
                         </div>
                         

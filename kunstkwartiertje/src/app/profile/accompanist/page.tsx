@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import useCurrentUserProfile from "src/app/components/profile/useCurrentUserProfile";
 
 export default function AccompanistProfile() {
     const [currentPage, setCurrentPage] = useState(0);
+    const { username } = useCurrentUserProfile();
     
     const artists = [
         { id:1, name: "Artist 1", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+1&background=random" },
@@ -101,13 +103,13 @@ export default function AccompanistProfile() {
                         <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100 shrink-0">
                             <img 
                                 className="w-full h-full object-cover" 
-                                src="https://ui-avatars.com/api/?name=Begeleider+Naam&background=random" 
+                                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=random`} 
                                 alt="Profile Picture" 
                             />
                         </div>
                         
                         <div className="grow text-center md:text-left">
-                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Begeleider Naam</h1>
+                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{username}</h1>
                             <br />
                         </div>
                         

@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from 'src/utils/supabase/client';
 
@@ -18,7 +18,16 @@ export default function RegisterPage() {
   const [lastRegisterAttempt, setLastRegisterAttempt] = useState<number | null>(null);
   const [nextAllowedRegisterAt, setNextAllowedRegisterAt] = useState<number | null>(null);
 
-  const [isPending, startTransition] = useTransition();
+  const safeNavigate = (path: string) => {
+    router.replace(path);
+
+    // Fallback in case client navigation gets stuck in pending state.
+    window.setTimeout(() => {
+      if (window.location.pathname !== path) {
+        window.location.assign(path);
+      }
+    }, 1500);
+  };
 
   const handleRegister = async () => {
     if (loading) {
@@ -48,71 +57,46 @@ export default function RegisterPage() {
     setError('');
     setLastRegisterAttempt(now);
 
-    const { data: existingUser, error: existingUserError } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .maybeSingle();
+    try {
+      const { data, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username,
+            type: role.toLowerCase(),
+          },
+        },
+      });
 
-    if (existingUserError) {
-      console.error('Supabase user lookup error', existingUserError);
-      setError('Kan gebruikerscontrole niet voltooien, probeer opnieuw.');
-      setLoading(false);
-      return;
-    }
+      if (authError) {
+        console.error('Supabase signUp error', authError);
 
-    if (existingUser) {
-      setError('Account bestaat al met dit e-mailadres.');
-      setLoading(false);
-      return;
-    }
-
-    const { data, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          username,
-          type: role.toLowerCase(),
+        if (authError.status === 429 || authError.message.toLowerCase().includes('rate limit')) {
+          setNextAllowedRegisterAt(Date.now() + 60000);
+          setError('Te veel verzoeken: probeer het over 1 minuut opnieuw.');
+        } else if (authError.message.toLowerCase().includes('already registered')) {
+          setError('Account bestaat al');
+        } else {
+          setError(authError.message || 'Onverwachte fout bij registratie.');
         }
-      }
-    });
 
-    if (authError) {
-      console.error('Supabase signUp error', authError);
-
-      if (authError.status === 429 || authError.message.toLowerCase().includes('rate limit')) {
-        setNextAllowedRegisterAt(Date.now() + 60000);
-        setError('Te veel verzoeken: probeer het over 1 minuut opnieuw.');
-      } else if (authError.message.toLowerCase().includes('already registered')) {
-        setError('Account bestaat al');
-      } else {
-        setError(authError.message || 'Onverwachte fout bij registratie.');
+        return;
       }
 
+      if (!data?.user?.id) {
+        setError('Kan geen gebruiker aanmaken. Probeer later nogmaals.');
+        return;
+      }
+
+      console.log('User successfully registered with ID:', data.user.id, 'and role:', role.toLowerCase());
+      safeNavigate('/login');
+    } catch (registerError) {
+      console.error('Unexpected register error', registerError);
+      setError('Onverwachte fout bij registratie. Probeer opnieuw.');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    console.log('Registration successful. User data:', data?.user);
-    console.log('User metadata:', data?.user?.user_metadata);
-
-    if (!data?.user?.id) {
-      setError('Kan geen gebruiker aanmaken. Probeer later nogmaals.');
-      setLoading(false);
-      return;
-    }
-
-    // Note: User role is already stored in auth metadata, so we don't need to insert into users table
-    // If you need additional user data (username, phone, etc.), you'll need to fix the users table schema
-    // to use UUID for the id column instead of bigint
-
-    console.log('User successfully registered with ID:', data.user.id, 'and role:', role.toLowerCase());
-
-    startTransition(() => {
-      router.push('/login');
-    });
-    setLoading(false);
   };
 
   const handleOAuth = async (provider: 'google' | 'apple') => {
@@ -194,10 +178,10 @@ export default function RegisterPage() {
         <button
           type="button"
           onClick={handleRegister}
-          disabled={loading || isPending}
+          disabled={loading}
           className="w-full mt-6 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-900"
         >
-          {loading || isPending ? 'Laden...' : 'Registreren'}
+          {loading ? 'Laden...' : 'Registreren'}
         </button>
 
         <div className="flex items-center my-6">

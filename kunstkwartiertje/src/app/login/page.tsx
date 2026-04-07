@@ -77,7 +77,12 @@ const LoginPage = () => {
     setLoading(true);
     setError("");
 
-    const { error } = await supabase.auth.signInWithOAuth({ provider });
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${location.origin}/auth/callback`,
+      },
+    });
 
     if (error) {
       setError(error.message);

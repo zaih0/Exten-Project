@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import useCurrentUserProfile from "src/app/components/profile/useCurrentUserProfile";
 
 type Artwork = {
     id: number;
@@ -32,11 +33,19 @@ const initialArtworks: Artwork[] = [
 ];
 
 export default function ArtistEditPage() {
-    const [artistName, setArtistName] = useState("Artist Name");
+    const { username } = useCurrentUserProfile();
+    const [artistName, setArtistName] = useState("");
+    const [hasCustomArtistName, setHasCustomArtistName] = useState(false);
     const [bio, setBio] = useState("Over mij...");
     const [profileImage, setProfileImage] = useState("/profileImage.jpg");
     const [artworks, setArtworks] = useState<Artwork[]>(initialArtworks);
     const [isSaved, setIsSaved] = useState(false);
+
+    useEffect(() => {
+        if (!hasCustomArtistName && username && username !== "Gebruiker") {
+            setArtistName(username);
+        }
+    }, [username, hasCustomArtistName]);
 
     const updateArtwork = (
         id: number,
@@ -106,6 +115,7 @@ export default function ArtistEditPage() {
                                 type="text"
                                 value={artistName}
                                 onChange={(event) => {
+                                    setHasCustomArtistName(true);
                                     setArtistName(event.target.value);
                                     setIsSaved(false);
                                 }}
