@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "src/utils/supabase/client";
 
-type AdminTabKey = "access" | "chat" | "kunst" | "users" | "allusers" | "resetpw";
+type AdminTabKey = "access" | "chat" | "kunst" | "users" | "allusers" | "resetpw" | "artworks" | "locations";
 type RequestStatus = "pending" | "approved" | "denied";
 
 type PendingRequest = {
@@ -33,6 +33,21 @@ type DenyArtworkTarget = {
     title: string;
 };
 
+type AdminArtwork = {
+    id: number;
+    title: string;
+    description: string;
+    imageUrl: string;
+    status: string;
+    created_at: string | null;
+    denialReason: string | null;
+    artistName: string;
+    artistEmail: string | null;
+    locationName: string | null;
+    locationAddress: string | null;
+    isReserved: boolean;
+};
+
 type BlockedUser = {
     id: string | number;
     email: string | null;
@@ -57,6 +72,8 @@ const adminTabs: Array<{ key: AdminTabKey; label: string }> = [
     { key: "users", label: "Geblokkeerde gebruikers" },
     { key: "allusers", label: "Alle gebruikers" },
     { key: "resetpw", label: "Wachtwoord herstellen" },
+    { key: "artworks", label: "Kunstwerken beheren" },
+    { key: "locations", label: "Locatiebeheer" },
 ];
 
 const adminTabExamples: Record<AdminTabKey, string[]> = {
@@ -86,6 +103,8 @@ const adminTabExamples: Record<AdminTabKey, string[]> = {
         "Herstel wordt geblokkeerd door risicovolle/potentieel frauduleuze activiteit.",
         "Wachtwoordherstel voor accounts die tijdelijk vergrendeld zijn.",
     ],
+    artworks: [],
+    locations: [],
 };
 
 const roleLabels: Record<string, string> = {
@@ -149,6 +168,21 @@ export default function AdminPage() {
     const [passwordChangeLogs, setPasswordChangeLogs] = useState<PasswordChangeLog[]>([]);
     const [isLoadingPasswordLogs, setIsLoadingPasswordLogs] = useState(true);
     const [currentAdminEmail, setCurrentAdminEmail] = useState<string | null>(null);
+    const [allArtworks, setAllArtworks] = useState<AdminArtwork[]>([]);
+    const [isLoadingAllArtworks, setIsLoadingAllArtworks] = useState(true);
+    const [allArtworksError, setAllArtworksError] = useState<string | null>(null);
+    const [allArtworksMessage, setAllArtworksMessage] = useState<string | null>(null);
+    const [editingArtwork, setEditingArtwork] = useState<AdminArtwork | null>(null);
+    const [editTitle, setEditTitle] = useState("");
+    const [editDescription, setEditDescription] = useState("");
+    const [editLocationName, setEditLocationName] = useState("");
+    const [editLocationAddress, setEditLocationAddress] = useState("");
+    const [editImageFile, setEditImageFile] = useState<File | null>(null);
+    const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
+    const [isSavingArtwork, setIsSavingArtwork] = useState(false);
+    const [deletingArtwork, setDeletingArtwork] = useState<AdminArtwork | null>(null);
+    const [isDeletingArtwork, setIsDeletingArtwork] = useState(false);
+    const [artworkSearchQuery, setArtworkSearchQuery] = useState("");
     const notificationRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -304,12 +338,44 @@ export default function AdminPage() {
 
         void loadAllUsers();
 
+        const loadAllArtworks = async () => {
+            setIsLoadingAllArtworks(true);
+            setAllArtworksError(null);
+
+            const response = await fetch("/api/admin/artworks", {
+                method: "GET",
+                cache: "no-store",
+            });
+
+            const responseText = await response.text();
+            const result = (() => {
+                try {
+                    return JSON.parse(responseText) as { error?: string; artworks?: AdminArtwork[] };
+                } catch {
+                    return null;
+                }
+            })();
+
+            if (!response.ok) {
+                setAllArtworksError(result?.error ?? "Kon kunstwerken niet ophalen.");
+                setIsLoadingAllArtworks(false);
+                return;
+            }
+
+            setAllArtworks(result?.artworks ?? []);
+            setAllArtworksError(null);
+            setIsLoadingAllArtworks(false);
+        };
+
+        void loadAllArtworks();
+
         const interval = window.setInterval(() => {
             void loadPendingRequests();
             void loadPendingArtworkRequests();
             void loadBlockedUsers();
             void loadAllUsers();
             void loadPasswordLogs();
+            void loadAllArtworks();
         }, 15000);
 
         const handleFocus = () => {
@@ -318,6 +384,7 @@ export default function AdminPage() {
             void loadBlockedUsers();
             void loadAllUsers();
             void loadPasswordLogs();
+            void loadAllArtworks();
         };
 
         window.addEventListener("focus", handleFocus);
@@ -612,10 +679,133 @@ export default function AdminPage() {
         setIsResettingPassword(false);
     };
 
+    const openEditArtwork = (artwork: AdminArtwork) => {
+        setEditingArtwork(artwork);
+        setEditTitle(artwork.title);
+        setEditDescription(artwork.description ?? "");
+        setEditLocationName(artwork.locationName ?? "");
+        setEditLocationAddress(artwork.locationAddress ?? "");
+        setEditImageFile(null);
+        setEditImagePreview(null);
+        setAllArtworksError(null);
+        setAllArtworksMessage(null);
+    };
+
+    const handleSaveArtwork = async () => {
+        if (!editingArtwork) return;
+        setIsSavingArtwork(true);
+        setAllArtworksError(null);
+
+        const formData = new FormData();
+        formData.append("artworkId", String(editingArtwork.id));
+        formData.append("title", editTitle);
+        formData.append("description", editDescription);
+        formData.append("locationName", editLocationName);
+        formData.append("locationAddress", editLocationAddress);
+        if (editImageFile) formData.append("file", editImageFile);
+
+        const response = await fetch("/api/admin/artworks", {
+            method: "PATCH",
+            body: formData,
+        });
+
+        const responseText = await response.text();
+        const result = (() => {
+            try {
+                return JSON.parse(responseText) as {
+                    error?: string;
+                    newImageUrl?: string | null;
+                    locationName?: string | null;
+                    locationAddress?: string | null;
+                };
+            } catch {
+                return null;
+            }
+        })();
+
+        if (!response.ok) {
+            setAllArtworksError(result?.error ?? "Kon kunstwerk niet opslaan.");
+            setIsSavingArtwork(false);
+            return;
+        }
+
+        const newImageUrl = result?.newImageUrl ?? null;
+        setAllArtworks((current) =>
+            current.map((a) =>
+                a.id === editingArtwork.id
+                    ? {
+                          ...a,
+                          title: editTitle,
+                          description: editDescription,
+                          imageUrl: newImageUrl ?? a.imageUrl,
+                          locationName: result?.locationName !== undefined ? result.locationName : a.locationName,
+                          locationAddress:
+                              result?.locationAddress !== undefined ? result.locationAddress : a.locationAddress,
+                      }
+                    : a,
+            ),
+        );
+        setAllArtworksMessage("Kunstwerk bijgewerkt.");
+        setEditingArtwork(null);
+        setEditImageFile(null);
+        setEditImagePreview(null);
+        setIsSavingArtwork(false);
+    };
+
+    const handleDeleteArtwork = async () => {
+        if (!deletingArtwork) return;
+        setIsDeletingArtwork(true);
+        setAllArtworksError(null);
+
+        const response = await fetch("/api/admin/artworks", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ artworkId: deletingArtwork.id }),
+        });
+
+        const responseText = await response.text();
+        const result = (() => {
+            try {
+                return JSON.parse(responseText) as { error?: string };
+            } catch {
+                return null;
+            }
+        })();
+
+        if (!response.ok) {
+            setAllArtworksError(result?.error ?? "Kon kunstwerk niet verwijderen.");
+            setIsDeletingArtwork(false);
+            return;
+        }
+
+        setAllArtworks((current) => current.filter((a) => a.id !== deletingArtwork.id));
+        setAllArtworksMessage("Kunstwerk verwijderd.");
+        setDeletingArtwork(null);
+        setIsDeletingArtwork(false);
+    };
+
     const accountPendingCount = pendingRequests.length;
     const artworkPendingCount = pendingArtworkRequests.length;
     const pendingCount = accountPendingCount + artworkPendingCount;
     const blockedCount = blockedUsers.length;
+
+    const filteredArtworks = allArtworks.filter(
+        (artwork) =>
+            artwork.title.toLowerCase().includes(artworkSearchQuery.toLowerCase()) ||
+            artwork.artistName.toLowerCase().includes(artworkSearchQuery.toLowerCase()),
+    );
+
+    // Group artworks by location name for the Locatiebeheer tab
+    const artworksWithLocation = allArtworks.filter((a) => a.isReserved);
+    const locationGroups = Array.from(
+        artworksWithLocation.reduce((map, artwork) => {
+            const key = artwork.locationName ?? "(Geen locatie)";
+            const group = map.get(key) ?? { locationName: artwork.locationName, artworks: [] as AdminArtwork[] };
+            group.artworks.push(artwork);
+            map.set(key, group);
+            return map;
+        }, new Map<string, { locationName: string | null; artworks: AdminArtwork[] }>()),
+    ).map(([key, value]) => ({ key, ...value }));
 
     return (
         <div
@@ -1016,6 +1206,231 @@ export default function AdminPage() {
                 </div>
             )}
 
+            {editingArtwork && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget && !isSavingArtwork) setEditingArtwork(null);
+                    }}
+                >
+                    <div className="w-full max-w-2xl rounded-3xl border border-purple-200/60 bg-white p-6 shadow-2xl shadow-purple-500/20">
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <p className="text-lg font-semibold text-zinc-900">Kunstwerk bewerken</p>
+                                <p className="mt-1 text-xs text-zinc-500">Door {editingArtwork.artistName}</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => { if (!isSavingArtwork) setEditingArtwork(null); }}
+                                disabled={isSavingArtwork}
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 transition hover:bg-zinc-200 disabled:opacity-60"
+                                aria-label="Sluiten"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
+                                    <path d="M18 6 6 18" />
+                                    <path d="m6 6 12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Photo section */}
+                        <div className="mt-4">
+                            <span className="text-xs font-semibold text-zinc-700">Foto</span>
+                            <div className="relative mt-1 overflow-hidden rounded-xl ring-1 ring-purple-200/60">
+                                {editImagePreview ? (
+                                    <img
+                                        src={editImagePreview}
+                                        alt="Nieuwe foto voorvertoning"
+                                        className="max-h-48 w-full object-cover"
+                                    />
+                                ) : editingArtwork.imageUrl ? (
+                                    <img
+                                        src={editingArtwork.imageUrl}
+                                        alt={editingArtwork.title}
+                                        className="max-h-48 w-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="flex h-24 items-center justify-center bg-zinc-50 text-sm text-zinc-400">
+                                        Geen foto
+                                    </div>
+                                )}
+                                <label
+                                    htmlFor="edit-artwork-image"
+                                    className="absolute bottom-2 right-2 flex cursor-pointer items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-purple-700 shadow ring-1 ring-purple-200 transition hover:bg-white"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5" aria-hidden="true">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                        <polyline points="17 8 12 3 7 8" />
+                                        <line x1="12" y1="3" x2="12" y2="15" />
+                                    </svg>
+                                    {editImagePreview ? "Andere foto" : "Foto wijzigen"}
+                                </label>
+                                <input
+                                    id="edit-artwork-image"
+                                    type="file"
+                                    accept="image/*"
+                                    className="sr-only"
+                                    onChange={(e) => {
+                                        const chosen = e.target.files?.[0] ?? null;
+                                        setEditImageFile(chosen);
+                                        if (editImagePreview) URL.revokeObjectURL(editImagePreview);
+                                        setEditImagePreview(chosen ? URL.createObjectURL(chosen) : null);
+                                    }}
+                                />
+                            </div>
+                            {editImagePreview && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        URL.revokeObjectURL(editImagePreview);
+                                        setEditImageFile(null);
+                                        setEditImagePreview(null);
+                                    }}
+                                    className="mt-1.5 text-xs text-zinc-500 underline hover:text-zinc-700"
+                                >
+                                    Huidige foto behouden
+                                </button>
+                            )}
+                        </div>
+
+                        {allArtworksError && (
+                            <div className="mt-4 rounded-md bg-rose-50 px-3 py-2.5 text-sm text-rose-600 ring-1 ring-rose-200">
+                                {allArtworksError}
+                            </div>
+                        )}
+
+                        <div className="mt-4 space-y-3">
+                            <label className="block">
+                                <span className="text-xs font-semibold text-zinc-700">Titel</span>
+                                <input
+                                    type="text"
+                                    value={editTitle}
+                                    onChange={(e) => setEditTitle(e.target.value)}
+                                    className="mt-1 w-full rounded-xl border border-purple-200 px-3 py-2 text-sm text-zinc-800 outline-none ring-purple-300 focus:ring"
+                                />
+                            </label>
+                            <label className="block">
+                                <span className="text-xs font-semibold text-zinc-700">Beschrijving</span>
+                                <textarea
+                                    value={editDescription}
+                                    onChange={(e) => setEditDescription(e.target.value)}
+                                    rows={4}
+                                    className="mt-1 w-full rounded-xl border border-purple-200 px-3 py-2 text-sm text-zinc-800 outline-none ring-purple-300 focus:ring"
+                                />
+                            </label>
+                        </div>
+
+                        <div className="mt-4">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-semibold text-zinc-700">Locatie</span>
+                                {!editingArtwork.isReserved && (
+                                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] text-zinc-500 ring-1 ring-zinc-200">
+                                        Niet gereserveerd – locatie n.v.t.
+                                    </span>
+                                )}
+                            </div>
+                            <div className="mt-1 grid gap-2 sm:grid-cols-2">
+                                <input
+                                    type="text"
+                                    value={editLocationName}
+                                    onChange={(e) => setEditLocationName(e.target.value)}
+                                    placeholder="Locatienaam (bijv. Galerie Noord)"
+                                    disabled={!editingArtwork.isReserved}
+                                    className="w-full rounded-xl border border-purple-200 px-3 py-2 text-sm text-zinc-800 outline-none ring-purple-300 placeholder:text-zinc-400 focus:ring disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400"
+                                />
+                                <input
+                                    type="text"
+                                    value={editLocationAddress}
+                                    onChange={(e) => setEditLocationAddress(e.target.value)}
+                                    placeholder="Adres (bijv. Kerkstraat 1, Amsterdam)"
+                                    disabled={!editingArtwork.isReserved}
+                                    className="w-full rounded-xl border border-purple-200 px-3 py-2 text-sm text-zinc-800 outline-none ring-purple-300 placeholder:text-zinc-400 focus:ring disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="mt-5 flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setEditingArtwork(null)}
+                                disabled={isSavingArtwork}
+                                className="rounded-full bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-200 disabled:opacity-60"
+                            >
+                                Annuleren
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void handleSaveArtwork()}
+                                disabled={isSavingArtwork || !editTitle.trim()}
+                                className="rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {isSavingArtwork ? "Opslaan..." : "Opslaan"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {deletingArtwork && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget && !isDeletingArtwork) setDeletingArtwork(null);
+                    }}
+                >
+                    <div className="w-full max-w-md rounded-3xl border border-rose-200/70 bg-white p-6 shadow-2xl shadow-rose-500/20">
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <p className="text-base font-semibold text-zinc-900">Kunstwerk verwijderen</p>
+                                <p className="mt-1 text-xs text-zinc-500">{deletingArtwork.title}</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => { if (!isDeletingArtwork) setDeletingArtwork(null); }}
+                                disabled={isDeletingArtwork}
+                                className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 transition hover:bg-zinc-200 disabled:opacity-60"
+                                aria-label="Sluiten"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
+                                    <path d="M18 6 6 18" />
+                                    <path d="m6 6 12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <p className="mt-4 text-sm text-zinc-700">
+                            Weet je zeker dat je <span className="font-semibold">{deletingArtwork.title}</span> wilt
+                            verwijderen? Dit kan niet ongedaan worden gemaakt.
+                        </p>
+
+                        {allArtworksError && (
+                            <div className="mt-3 rounded-md bg-rose-50 px-3 py-2.5 text-sm text-rose-600 ring-1 ring-rose-200">
+                                {allArtworksError}
+                            </div>
+                        )}
+
+                        <div className="mt-5 flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setDeletingArtwork(null)}
+                                disabled={isDeletingArtwork}
+                                className="rounded-full bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-200 disabled:opacity-60"
+                            >
+                                Annuleren
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void handleDeleteArtwork()}
+                                disabled={isDeletingArtwork}
+                                className="rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {isDeletingArtwork ? "Verwijderen..." : "Verwijderen"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {selectedUser && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
@@ -1207,6 +1622,10 @@ export default function AdminPage() {
                                             ? "Overzicht van geblokkeerde gebruikers."
                                             : activeTab === "allusers"
                                                 ? "Overzicht van alle geregistreerde gebruikers."
+                                            : activeTab === "artworks"
+                                                ? "Beheer alle geplaatste kunstwerken — bewerk titels, beschrijvingen of verwijder."
+                                            : activeTab === "locations"
+                                                ? "Overzicht van alle locaties waar gereserveerde kunstwerken zich bevinden."
                                         : "Voorbeelden van mogelijke situaties:"}
                                 </div>
 
@@ -1622,6 +2041,235 @@ export default function AdminPage() {
                                             </div>
                                         </div>
                                     </div>
+                                ) : activeTab === "artworks" ? (
+                                    <div className="mt-4 space-y-3">
+                                        {(allArtworksError || allArtworksMessage) && (
+                                            <div
+                                                className={`rounded-md px-3 py-3 text-sm ring-1 ${
+                                                    allArtworksError
+                                                        ? "bg-rose-50 text-rose-600 ring-rose-200"
+                                                        : "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                                                }`}
+                                            >
+                                                {allArtworksError ?? allArtworksMessage}
+                                            </div>
+                                        )}
+
+                                        <input
+                                            type="text"
+                                            value={artworkSearchQuery}
+                                            onChange={(e) => setArtworkSearchQuery(e.target.value)}
+                                            placeholder="Zoek op titel of artiest..."
+                                            className="w-full rounded-xl border border-purple-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none ring-purple-300 focus:ring"
+                                        />
+
+                                        {isLoadingAllArtworks ? (
+                                            <div className="rounded-md bg-purple-50/70 px-3 py-3 text-sm text-purple-700 ring-1 ring-purple-200/60">
+                                                Kunstwerken laden...
+                                            </div>
+                                        ) : filteredArtworks.length === 0 ? (
+                                            <div className="rounded-md bg-zinc-50 px-3 py-3 text-sm text-zinc-600 ring-1 ring-zinc-200">
+                                                {artworkSearchQuery
+                                                    ? "Geen kunstwerken gevonden voor deze zoekopdracht."
+                                                    : "Er zijn nog geen kunstwerken."}
+                                            </div>
+                                        ) : (
+                                            filteredArtworks.map((artwork) => (
+                                                <div
+                                                    key={artwork.id}
+                                                    className="flex items-center gap-4 rounded-md bg-purple-50/70 px-4 py-3 ring-1 ring-purple-200/60"
+                                                >
+                                                    {artwork.imageUrl ? (
+                                                        <img
+                                                            src={artwork.imageUrl}
+                                                            alt={artwork.title}
+                                                            className="h-14 w-14 shrink-0 rounded-lg object-cover ring-1 ring-purple-200/60"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-zinc-100 ring-1 ring-zinc-200">
+                                                            <svg
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                viewBox="0 0 24 24"
+                                                                fill="none"
+                                                                stroke="currentColor"
+                                                                strokeWidth="1.5"
+                                                                className="h-6 w-6 text-zinc-400"
+                                                                aria-hidden="true"
+                                                            >
+                                                                <rect width="18" height="18" x="3" y="3" rx="2" />
+                                                                <circle cx="9" cy="9" r="2" />
+                                                                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                                                            </svg>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="truncate text-sm font-semibold text-zinc-900">{artwork.title}</p>
+                                                        <p className="truncate text-xs text-zinc-500">{artwork.artistName}</p>
+                                                        {artwork.locationName && (
+                                                            <p className="mt-0.5 truncate text-xs text-indigo-600">
+                                                                📍 {artwork.locationName}
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex shrink-0 items-center gap-2">
+                                                        <span
+                                                            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${
+                                                                artwork.status === "approved"
+                                                                    ? "bg-emerald-100 text-emerald-700 ring-emerald-200"
+                                                                    : artwork.status === "pending"
+                                                                        ? "bg-amber-100 text-amber-700 ring-amber-200"
+                                                                        : "bg-rose-100 text-rose-700 ring-rose-200"
+                                                            }`}
+                                                        >
+                                                            {artwork.status === "approved"
+                                                                ? "Goedgekeurd"
+                                                                : artwork.status === "pending"
+                                                                    ? "Wachtend"
+                                                                    : "Afgewezen"}
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openEditArtwork(artwork)}
+                                                            className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-purple-700 ring-1 ring-purple-200 transition hover:bg-purple-50"
+                                                        >
+                                                            Bewerken
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setAllArtworksError(null);
+                                                                setAllArtworksMessage(null);
+                                                                setDeletingArtwork(artwork);
+                                                            }}
+                                                            className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 ring-1 ring-rose-200 transition hover:bg-rose-50"
+                                                        >
+                                                            Verwijderen
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                ) : activeTab === "locations" ? (
+                                    <div className="mt-4 space-y-4">
+                                        {(allArtworksError || allArtworksMessage) && (
+                                            <div
+                                                className={`rounded-md px-3 py-3 text-sm ring-1 ${
+                                                    allArtworksError
+                                                        ? "bg-rose-50 text-rose-600 ring-rose-200"
+                                                        : "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                                                }`}
+                                            >
+                                                {allArtworksError ?? allArtworksMessage}
+                                            </div>
+                                        )}
+
+                                        {isLoadingAllArtworks ? (
+                                            <div className="rounded-md bg-purple-50/70 px-3 py-3 text-sm text-purple-700 ring-1 ring-purple-200/60">
+                                                Locaties laden...
+                                            </div>
+                                        ) : locationGroups.length === 0 ? (
+                                            <div className="rounded-md bg-zinc-50 px-3 py-3 text-sm text-zinc-600 ring-1 ring-zinc-200">
+                                                Er zijn nog geen gereserveerde kunstwerken met een locatie.
+                                            </div>
+                                        ) : (
+                                            locationGroups.map((group) => (
+                                                <div
+                                                    key={group.key}
+                                                    className="rounded-xl border border-indigo-200/60 bg-indigo-50/40 p-4"
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+                                                            <svg
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                viewBox="0 0 24 24"
+                                                                fill="none"
+                                                                stroke="currentColor"
+                                                                strokeWidth="2"
+                                                                className="h-4 w-4"
+                                                                aria-hidden="true"
+                                                            >
+                                                                <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
+                                                                <circle cx="12" cy="10" r="3" />
+                                                            </svg>
+                                                        </div>
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="text-sm font-semibold text-zinc-900">
+                                                                {group.locationName ?? "Geen locatienaam"}
+                                                            </p>
+                                                            <p className="text-xs text-zinc-500">
+                                                                {group.artworks[0]?.locationAddress ?? "Geen adres"}
+                                                            </p>
+                                                            {group.locationAddress && (
+                                                                <a
+                                                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(group.artworks[0]?.locationAddress ?? "")}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="mt-0.5 inline-text text-[11px] text-indigo-600 underline hover:text-indigo-800"
+                                                                >
+                                                                    Open in Google Maps
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                        <span className="shrink-0 rounded-full bg-indigo-100 px-2.5 py-1 text-[11px] font-semibold text-indigo-700 ring-1 ring-indigo-200">
+                                                            {group.artworks.length}{" "}
+                                                            {group.artworks.length === 1 ? "kunstwerk" : "kunstwerken"}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="mt-3 space-y-2">
+                                                        {group.artworks.map((artwork) => (
+                                                            <div
+                                                                key={artwork.id}
+                                                                className="flex items-center gap-3 rounded-lg bg-white/80 px-3 py-2.5 ring-1 ring-indigo-200/50"
+                                                            >
+                                                                {artwork.imageUrl ? (
+                                                                    <img
+                                                                        src={artwork.imageUrl}
+                                                                        alt={artwork.title}
+                                                                        className="h-10 w-10 shrink-0 rounded-lg object-cover ring-1 ring-indigo-200/60"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 ring-1 ring-zinc-200">
+                                                                        <svg
+                                                                            xmlns="http://www.w3.org/2000/svg"
+                                                                            viewBox="0 0 24 24"
+                                                                            fill="none"
+                                                                            stroke="currentColor"
+                                                                            strokeWidth="1.5"
+                                                                            className="h-5 w-5 text-zinc-400"
+                                                                            aria-hidden="true"
+                                                                        >
+                                                                            <rect width="18" height="18" x="3" y="3" rx="2" />
+                                                                            <circle cx="9" cy="9" r="2" />
+                                                                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                                                                        </svg>
+                                                                    </div>
+                                                                )}
+                                                                <div className="min-w-0 flex-1">
+                                                                    <p className="truncate text-sm font-semibold text-zinc-900">
+                                                                        {artwork.title}
+                                                                    </p>
+                                                                    <p className="truncate text-xs text-zinc-500">
+                                                                        {artwork.artistName}
+                                                                    </p>
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => openEditArtwork(artwork)}
+                                                                    className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-200 transition hover:bg-indigo-50"
+                                                                >
+                                                                    Bewerken
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
                                 ) : (
                                     <ul className="mt-3 space-y-2 text-sm text-zinc-700/90">
                                         {adminTabExamples[activeTab].map((example) => (
@@ -1634,6 +2282,7 @@ export default function AdminPage() {
                                         ))}
                                     </ul>
                                 )}
+
                             </div>
 
                             <div className="h-12 rounded-lg bg-gradient-to-r from-purple-200/55 to-fuchsia-200/40 ring-1 ring-purple-300/25" />
