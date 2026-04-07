@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createClient } from "src/utils/supabase/client";
 
 type AdminTabKey = "access" | "chat" | "kunst" | "users" | "allusers" | "resetpw";
 type RequestStatus = "pending" | "approved" | "denied";
@@ -40,6 +41,13 @@ type BlockedUser = {
     status: RequestStatus;
     created_at: string | null;
     blocked_status: boolean;
+};
+
+type PasswordChangeLog = {
+    id: number;
+    targetUserEmail: string | null;
+    changedByEmail: string | null;
+    changedAt: string | null;
 };
 
 const adminTabs: Array<{ key: AdminTabKey; label: string }> = [
@@ -132,9 +140,55 @@ export default function AdminPage() {
     const [selectedArtwork, setSelectedArtwork] = useState<ArtworkRequest | null>(null);
     const [denyArtworkTarget, setDenyArtworkTarget] = useState<DenyArtworkTarget | null>(null);
     const [denyArtworkReason, setDenyArtworkReason] = useState("");
+    const [passwordResetEmail, setPasswordResetEmail] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmNewPassword, setConfirmNewPassword] = useState("");
+    const [isResettingPassword, setIsResettingPassword] = useState(false);
+    const [passwordResetError, setPasswordResetError] = useState<string | null>(null);
+    const [passwordResetMessage, setPasswordResetMessage] = useState<string | null>(null);
+    const [passwordChangeLogs, setPasswordChangeLogs] = useState<PasswordChangeLog[]>([]);
+    const [isLoadingPasswordLogs, setIsLoadingPasswordLogs] = useState(true);
+    const [currentAdminEmail, setCurrentAdminEmail] = useState<string | null>(null);
     const notificationRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
+        const loadCurrentAdmin = async () => {
+            const supabase = createClient();
+            const {
+                data: { user },
+            } = await supabase.auth.getUser();
+
+            setCurrentAdminEmail(user?.email?.trim().toLowerCase() ?? null);
+        };
+
+        const loadPasswordLogs = async () => {
+            setIsLoadingPasswordLogs(true);
+
+            const response = await fetch("/api/admin/users/password", {
+                method: "GET",
+                cache: "no-store",
+            });
+
+            const responseText = await response.text();
+            const result = (() => {
+                try {
+                    return JSON.parse(responseText) as { error?: string; logs?: PasswordChangeLog[] };
+                } catch {
+                    return null;
+                }
+            })();
+
+            if (!response.ok) {
+                setPasswordResetError(result?.error ?? "Kon auditlog niet ophalen.");
+                setIsLoadingPasswordLogs(false);
+                return;
+            }
+
+            setPasswordChangeLogs(result?.logs ?? []);
+            setIsLoadingPasswordLogs(false);
+        };
+
+        void loadCurrentAdmin();
         const loadPendingRequests = async () => {
             setRequestError(null);
 
@@ -222,6 +276,7 @@ export default function AdminPage() {
         void loadPendingRequests();
         void loadBlockedUsers();
         void loadPendingArtworkRequests();
+        void loadPasswordLogs();
 
         const loadAllUsers = async () => {
             const response = await fetch("/api/admin/users", {
@@ -254,6 +309,7 @@ export default function AdminPage() {
             void loadPendingArtworkRequests();
             void loadBlockedUsers();
             void loadAllUsers();
+            void loadPasswordLogs();
         }, 15000);
 
         const handleFocus = () => {
@@ -261,6 +317,7 @@ export default function AdminPage() {
             void loadPendingArtworkRequests();
             void loadBlockedUsers();
             void loadAllUsers();
+            void loadPasswordLogs();
         };
 
         window.addEventListener("focus", handleFocus);
@@ -480,6 +537,79 @@ export default function AdminPage() {
         });
         setAllUsersMessage("Gebruiker is geblokkeerd.");
         setProcessingBlockEmail(null);
+    };
+
+    const handlePreparePasswordReset = (email: string | null) => {
+        if (!email) return;
+        setPasswordResetEmail(email);
+        setPasswordResetError(null);
+        setPasswordResetMessage(null);
+        setActiveTab("resetpw");
+        setSelectedUser(null);
+    };
+
+    const handlePasswordReset = async () => {
+        const email = passwordResetEmail.trim().toLowerCase();
+
+        if (!email) {
+            setPasswordResetError("Kies eerst een gebruiker.");
+            return;
+        }
+
+        if (newPassword.length < 8) {
+            setPasswordResetError("Nieuw wachtwoord moet minimaal 8 tekens bevatten.");
+            return;
+        }
+
+        if (newPassword !== confirmNewPassword) {
+            setPasswordResetError("De wachtwoorden komen niet overeen.");
+            return;
+        }
+
+        setIsResettingPassword(true);
+        setPasswordResetError(null);
+        setPasswordResetMessage(null);
+
+        const response = await fetch("/api/admin/users/password", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password: newPassword, changedByEmail: currentAdminEmail }),
+        });
+
+        const responseText = await response.text();
+        const result = (() => {
+            try {
+                return JSON.parse(responseText) as { error?: string; message?: string };
+            } catch {
+                return null;
+            }
+        })();
+
+        if (!response.ok) {
+            setPasswordResetError(result?.error ?? "Kon wachtwoord niet aanpassen.");
+            setIsResettingPassword(false);
+            return;
+        }
+
+        setPasswordResetMessage(result?.message ?? "Wachtwoord succesvol aangepast.");
+        setNewPassword("");
+        setConfirmNewPassword("");
+        const logRefreshResponse = await fetch("/api/admin/users/password", {
+            method: "GET",
+            cache: "no-store",
+        });
+        const logRefreshText = await logRefreshResponse.text();
+        const logRefreshResult = (() => {
+            try {
+                return JSON.parse(logRefreshText) as { logs?: PasswordChangeLog[] };
+            } catch {
+                return null;
+            }
+        })();
+        if (logRefreshResponse.ok) {
+            setPasswordChangeLogs(logRefreshResult?.logs ?? []);
+        }
+        setIsResettingPassword(false);
     };
 
     const accountPendingCount = pendingRequests.length;
@@ -977,16 +1107,26 @@ export default function AdminPage() {
                                 Sluiten
                             </button>
                             {!selectedUser.blocked_status ? (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        if (selectedUser.email) void handleBlockUser(selectedUser.email);
-                                    }}
-                                    disabled={processingBlockEmail === selectedUser.email || !selectedUser.email}
-                                    className="rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                    {processingBlockEmail === selectedUser.email ? "Bezig..." : "Blokkeer gebruiker"}
-                                </button>
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => handlePreparePasswordReset(selectedUser.email)}
+                                        disabled={!selectedUser.email}
+                                        className="rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-800 ring-1 ring-amber-200 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        Wachtwoord wijzigen
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (selectedUser.email) void handleBlockUser(selectedUser.email);
+                                        }}
+                                        disabled={processingBlockEmail === selectedUser.email || !selectedUser.email}
+                                        className="rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        {processingBlockEmail === selectedUser.email ? "Bezig..." : "Blokkeer gebruiker"}
+                                    </button>
+                                </>
                             ) : (
                                 <span className="rounded-full bg-rose-100 px-4 py-2 text-sm font-semibold text-rose-700 ring-1 ring-rose-200">
                                     Geblokkeerd
@@ -1366,6 +1506,121 @@ export default function AdminPage() {
                                                 );
                                             })
                                         )}
+                                    </div>
+                                ) : activeTab === "resetpw" ? (
+                                    <div className="mt-4 space-y-4">
+                                        {(passwordResetError || passwordResetMessage) && (
+                                            <div
+                                                className={`rounded-md px-3 py-3 text-sm ring-1 ${
+                                                    passwordResetError
+                                                        ? "bg-rose-50 text-rose-600 ring-rose-200"
+                                                        : "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                                                }`}
+                                            >
+                                                {passwordResetError ?? passwordResetMessage}
+                                            </div>
+                                        )}
+
+                                        <div className="grid gap-4 md:grid-cols-2">
+                                            <label className="block">
+                                                <span className="text-xs font-semibold text-zinc-700">Gebruiker</span>
+                                                <select
+                                                    value={passwordResetEmail}
+                                                    onChange={(event) => setPasswordResetEmail(event.target.value)}
+                                                    className="mt-1 w-full rounded-xl border border-purple-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none ring-purple-300 focus:ring"
+                                                >
+                                                    <option value="">Selecteer een gebruiker</option>
+                                                    {allUsers
+                                                        .filter((user) => Boolean(user.email))
+                                                        .map((user) => (
+                                                            <option key={user.email ?? String(user.id)} value={user.email ?? ""}>
+                                                                {user.username || user.email} {user.email ? `(${user.email})` : ""}
+                                                            </option>
+                                                        ))}
+                                                </select>
+                                            </label>
+
+                                            <div className="rounded-xl border border-purple-200/60 bg-purple-50/60 px-4 py-3 text-sm text-zinc-700">
+                                                Je ziet nooit het bestaande wachtwoord. Deze actie overschrijft alleen het huidige wachtwoord met een nieuw wachtwoord.
+                                            </div>
+                                        </div>
+
+                                        <div className="grid gap-4 md:grid-cols-2">
+                                            <label className="block">
+                                                <span className="text-xs font-semibold text-zinc-700">Nieuw wachtwoord</span>
+                                                <input
+                                                    type="password"
+                                                    value={newPassword}
+                                                    onChange={(event) => setNewPassword(event.target.value)}
+                                                    placeholder="Minimaal 8 tekens"
+                                                    className="mt-1 w-full rounded-xl border border-purple-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none ring-purple-300 focus:ring"
+                                                />
+                                            </label>
+
+                                            <label className="block">
+                                                <span className="text-xs font-semibold text-zinc-700">Bevestig wachtwoord</span>
+                                                <input
+                                                    type="password"
+                                                    value={confirmNewPassword}
+                                                    onChange={(event) => setConfirmNewPassword(event.target.value)}
+                                                    placeholder="Herhaal nieuw wachtwoord"
+                                                    className="mt-1 w-full rounded-xl border border-purple-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none ring-purple-300 focus:ring"
+                                                />
+                                            </label>
+                                        </div>
+
+                                        <div className="flex justify-end">
+                                            <button
+                                                type="button"
+                                                onClick={() => void handlePasswordReset()}
+                                                disabled={isResettingPassword || isLoadingAllUsers}
+                                                className="rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                            >
+                                                {isResettingPassword ? "Bezig..." : "Wachtwoord aanpassen"}
+                                            </button>
+                                        </div>
+
+                                        <div className="rounded-xl border border-purple-200/60 bg-white/70 p-4">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div>
+                                                    <p className="text-sm font-semibold text-zinc-900">Recente wijzigingen</p>
+                                                    <p className="mt-1 text-xs text-zinc-600">
+                                                        Deze log toont dat een wachtwoordwijziging heeft plaatsgevonden, nooit het wachtwoord zelf.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-3 space-y-2">
+                                                {isLoadingPasswordLogs ? (
+                                                    <div className="rounded-md bg-purple-50/70 px-3 py-3 text-sm text-purple-700 ring-1 ring-purple-200/60">
+                                                        Auditlog laden...
+                                                    </div>
+                                                ) : passwordChangeLogs.length === 0 ? (
+                                                    <div className="rounded-md bg-zinc-50 px-3 py-3 text-sm text-zinc-600 ring-1 ring-zinc-200">
+                                                        Er zijn nog geen wachtwoordwijzigingen gelogd.
+                                                    </div>
+                                                ) : (
+                                                    passwordChangeLogs.map((log) => (
+                                                        <div
+                                                            key={log.id}
+                                                            className="flex items-center justify-between gap-3 rounded-md bg-purple-50/70 px-3 py-3 ring-1 ring-purple-200/60"
+                                                        >
+                                                            <div>
+                                                                <p className="text-sm font-semibold text-zinc-900">
+                                                                    {log.targetUserEmail ?? "Onbekende gebruiker"}
+                                                                </p>
+                                                                <p className="mt-1 text-xs text-zinc-600">
+                                                                    Gewijzigd door {log.changedByEmail ?? "Admin"}
+                                                                </p>
+                                                            </div>
+                                                            <span className="text-xs font-semibold text-zinc-600">
+                                                                {formatRequestDate(log.changedAt)}
+                                                            </span>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 ) : (
                                     <ul className="mt-3 space-y-2 text-sm text-zinc-700/90">

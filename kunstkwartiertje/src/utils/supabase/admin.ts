@@ -6,7 +6,7 @@ export const createAdminClient = () => {
 
   if (!supabaseUrl || !serviceRoleKey) {
     throw new Error(
-      "Missing Supabase admin environment variables. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local.",
+      "Missing Supabase admin environment variables. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env or .env.local, then restart the app.",
     );
   }
 
