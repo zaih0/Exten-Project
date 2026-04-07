@@ -12,6 +12,13 @@ type Artwork = {
     imageUrl: string;
 };
 
+type ArtistFeedback = {
+    id: number;
+    feedbackText: string;
+    createdAt: string | null;
+    authorName: string;
+};
+
 export default function ArtistProfile() {
     const [expandedImage, setExpandedImage] = useState<string | null>(null);
     const [artworks, setArtworks] = useState<Artwork[]>([]);
@@ -31,6 +38,9 @@ export default function ArtistProfile() {
     const [isUploadingPicture, setIsUploadingPicture] = useState(false);
     const [profileMessage, setProfileMessage] = useState<string | null>(null);
     const [profileError, setProfileError] = useState<string | null>(null);
+    const [feedbackItems, setFeedbackItems] = useState<ArtistFeedback[]>([]);
+    const [isLoadingFeedback, setIsLoadingFeedback] = useState(true);
+    const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
     const openEdit = () => {
         setEditUsername(profileUsername || username);
@@ -131,7 +141,7 @@ export default function ArtistProfile() {
         const responseText = await response.text();
         const result = (() => {
             try {
-                return JSON.parse(responseText) as { error?: string };
+                return JSON.parse(responseText) as { error?: string; pendingApproval?: boolean };
             } catch {
                 return null;
             }
@@ -140,6 +150,13 @@ export default function ArtistProfile() {
         if (!response.ok) {
             setProfileError(result?.error ?? "Opslaan mislukt.");
             setIsSavingProfile(false);
+            return;
+        }
+
+        if (result?.pendingApproval) {
+            setProfileMessage("Wijziging verzonden. Deze moet eerst door je begeleider worden goedgekeurd.");
+            setIsSavingProfile(false);
+            setIsEditOpen(false);
             return;
         }
 
@@ -183,7 +200,7 @@ export default function ArtistProfile() {
         const responseText = await response.text();
         const result = (() => {
             try {
-                return JSON.parse(responseText) as { error?: string; imageUrl?: string };
+                return JSON.parse(responseText) as { error?: string; imageUrl?: string; pendingApproval?: boolean };
             } catch {
                 return null;
             }
@@ -196,6 +213,9 @@ export default function ArtistProfile() {
         }
 
         setEditProfilePic(result.imageUrl);
+        if (result.pendingApproval) {
+            setProfileMessage("Nieuwe profielfoto is ingediend en wacht op goedkeuring van je begeleider.");
+        }
         setIsUploadingPicture(false);
         setIsUploadOpen(false);
         setUploadFile(null);
@@ -248,6 +268,59 @@ export default function ArtistProfile() {
         };
 
         void loadArtworks();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadFeedback = async () => {
+            setIsLoadingFeedback(true);
+            setFeedbackError(null);
+
+            const supabase = createClient();
+            const {
+                data: { user },
+            } = await supabase.auth.getUser();
+
+            if (!user?.email) {
+                if (isMounted) {
+                    setFeedbackItems([]);
+                    setIsLoadingFeedback(false);
+                }
+                return;
+            }
+
+            const response = await fetch(`/api/artist/feedback?email=${encodeURIComponent(user.email)}`, {
+                method: "GET",
+                cache: "no-store",
+            });
+
+            const responseText = await response.text();
+            const result = (() => {
+                try {
+                    return JSON.parse(responseText) as { error?: string; feedback?: ArtistFeedback[] };
+                } catch {
+                    return null;
+                }
+            })();
+
+            if (!isMounted) return;
+
+            if (!response.ok) {
+                setFeedbackError(result?.error ?? "Kon feedback niet laden.");
+                setIsLoadingFeedback(false);
+                return;
+            }
+
+            setFeedbackItems(result?.feedback ?? []);
+            setIsLoadingFeedback(false);
+        };
+
+        void loadFeedback();
 
         return () => {
             isMounted = false;
@@ -321,6 +394,43 @@ export default function ArtistProfile() {
             </div>
 
             <div>
+                <div className="mb-10 rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">
+                    <div className="flex flex-col gap-1">
+                        <h2 className="text-xl font-bold text-zinc-900">Feedback van je begeleider</h2>
+                        <p className="text-sm text-zinc-600">
+                            Deze feedback is alleen zichtbaar voor jou en je begeleider.
+                        </p>
+                    </div>
+
+                    {isLoadingFeedback ? (
+                        <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700">
+                            Feedback laden...
+                        </div>
+                    ) : feedbackError ? (
+                        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                            {feedbackError}
+                        </div>
+                    ) : feedbackItems.length === 0 ? (
+                        <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                            Je hebt nog geen feedback ontvangen.
+                        </div>
+                    ) : (
+                        <div className="mt-4 space-y-3">
+                            {feedbackItems.map((item) => (
+                                <div key={item.id} className="rounded-xl border border-violet-100 bg-violet-50/40 px-4 py-3 shadow-sm">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <p className="text-sm font-semibold text-zinc-900">{item.authorName}</p>
+                                        <p className="text-xs text-zinc-500">
+                                            {item.createdAt ? new Date(item.createdAt).toLocaleString("nl-NL") : "Onbekende datum"}
+                                        </p>
+                                    </div>
+                                    <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{item.feedbackText}</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
                 {isLoadingArtworks ? (
                     <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700">
                         Kunstwerken laden...

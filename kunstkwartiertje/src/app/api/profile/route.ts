@@ -9,6 +9,52 @@ type ProfilePatchBody = {
     profile_pic?: string;
 };
 
+const canManagedArtistEditProfileField = async (params: {
+    supabase: any;
+    artistUserId: number;
+    permissionColumn: "can_edit_username" | "can_edit_about_me" | "can_edit_profile_pic";
+}) => {
+    const { supabase, artistUserId, permissionColumn } = params;
+
+    const { data, error } = await supabase
+        .from("accompanist_artist_permissions")
+        .select(`accompanist_user_id, ${permissionColumn}`)
+        .eq("artist_user_id", artistUserId);
+
+    if (error) {
+        if (error.code === "42P01") return { allowed: true, reason: null as string | null };
+        return { allowed: false, reason: error.message };
+    }
+
+    if (!data || data.length === 0) return { allowed: true, reason: null as string | null };
+
+    const hasPermission = data.some((row: Record<string, unknown>) => Boolean(row[permissionColumn]));
+    if (!hasPermission) {
+        return {
+            allowed: false,
+            reason: "Je begeleider heeft geen toestemming gegeven om dit onderdeel van je profiel te wijzigen.",
+        };
+    }
+
+    return { allowed: true, reason: null as string | null };
+};
+
+const getManagedArtistLinks = async (supabase: any, artistUserId: number) => {
+    const { data, error } = await supabase
+        .from("accompanist_artist_permissions")
+        .select("accompanist_user_id")
+        .eq("artist_user_id", artistUserId);
+
+    if (error) {
+        if (error.code === "42P01") {
+            return { links: [] as Array<{ accompanist_user_id: number }>, error: null as string | null };
+        }
+        return { links: [] as Array<{ accompanist_user_id: number }>, error: error.message };
+    }
+
+    return { links: (data ?? []) as Array<{ accompanist_user_id: number }>, error: null as string | null };
+};
+
 const loadUserAndRoleTable = async (supabase: any, email: string) => {
     const { data: user, error: userError } = await supabase
         .from("users")
@@ -119,6 +165,87 @@ export async function PATCH(request: Request) {
 
         if (ensureResult.error) {
             return NextResponse.json({ error: ensureResult.error }, { status: 500 });
+        }
+
+        if (resolvedRole === "kunstenaar") {
+            const managedLinksResult = await getManagedArtistLinks(supabase, Number(user.id));
+            if (managedLinksResult.error) {
+                return NextResponse.json({ error: managedLinksResult.error }, { status: 500 });
+            }
+
+            const isManagedByAccompanist = managedLinksResult.links.length > 0;
+
+            if (typeof payload.username === "string") {
+                const check = await canManagedArtistEditProfileField({
+                    supabase,
+                    artistUserId: Number(user.id),
+                    permissionColumn: "can_edit_username",
+                });
+                if (!check.allowed) {
+                    return NextResponse.json({ error: check.reason ?? "Actie niet toegestaan." }, { status: 403 });
+                }
+            }
+
+            if (typeof payload.about_me === "string") {
+                const check = await canManagedArtistEditProfileField({
+                    supabase,
+                    artistUserId: Number(user.id),
+                    permissionColumn: "can_edit_about_me",
+                });
+                if (!check.allowed) {
+                    return NextResponse.json({ error: check.reason ?? "Actie niet toegestaan." }, { status: 403 });
+                }
+            }
+
+            if (typeof payload.profile_pic === "string") {
+                const check = await canManagedArtistEditProfileField({
+                    supabase,
+                    artistUserId: Number(user.id),
+                    permissionColumn: "can_edit_profile_pic",
+                });
+                if (!check.allowed) {
+                    return NextResponse.json({ error: check.reason ?? "Actie niet toegestaan." }, { status: 403 });
+                }
+            }
+
+            // For managed artists: queue profile changes for accompanist approval.
+            if (isManagedByAccompanist) {
+                const requestUpdatePayload: Record<string, string | number> = {
+                    artist_user_id: Number(user.id),
+                };
+
+                if (typeof payload.username === "string") {
+                    requestUpdatePayload.proposed_username = payload.username.trim();
+                }
+                if (typeof payload.about_me === "string") {
+                    requestUpdatePayload.proposed_about_me = payload.about_me.trim();
+                }
+                if (typeof payload.profile_pic === "string") {
+                    requestUpdatePayload.proposed_profile_pic = payload.profile_pic.trim();
+                }
+
+                if (Object.keys(requestUpdatePayload).length > 1) {
+                    const { error: requestError } = await supabase
+                        .from("artist_profile_change_requests")
+                        .upsert(requestUpdatePayload, { onConflict: "artist_user_id" });
+
+                    if (requestError) {
+                        if (requestError.code === "42P01") {
+                            return NextResponse.json(
+                                {
+                                    error:
+                                        "Tabel artist_profile_change_requests ontbreekt. Voer database/artist_profile_change_requests.sql uit.",
+                                },
+                                { status: 500 },
+                            );
+                        }
+
+                        return NextResponse.json({ error: requestError.message }, { status: 500 });
+                    }
+                }
+
+                return NextResponse.json({ ok: true, pendingApproval: true });
+            }
         }
 
         const roleUpdatePayload: Record<string, string | null> = {};

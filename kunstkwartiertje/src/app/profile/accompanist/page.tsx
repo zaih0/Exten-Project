@@ -1,12 +1,49 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import useCurrentUserProfile from "src/app/components/profile/useCurrentUserProfile";
 import { createClient } from "src/utils/supabase/client";
 
+type PendingProfileChanges = {
+    proposedUsername: string | null;
+    proposedAboutMe: string | null;
+    proposedProfilePic: string | null;
+    createdAt: string | null;
+};
+
+type ManagedArtist = {
+    id: number;
+    email: string;
+    username: string;
+    status: string | null;
+    blocked: boolean;
+    createdAt: string | null;
+    aboutMe: string;
+    profilePic: string;
+    hasPendingProfileChanges?: boolean;
+    pendingProfileChanges?: PendingProfileChanges | null;
+    permissions: {
+        canAddArtworks: boolean;
+        canEditArtworks: boolean;
+        canUseChat: boolean;
+        canEditProfilePic: boolean;
+        canEditUsername: boolean;
+        canEditAboutMe: boolean;
+    };
+};
+
+type ManagedArtwork = {
+    id: number;
+    title: string;
+    description: string;
+    imageUrl: string;
+    status: "pending" | "approved" | "denied";
+    artistName: string;
+    artistEmail: string | null;
+};
+
 export default function AccompanistProfile() {
-    const [currentPage, setCurrentPage] = useState(0);
     const { username, role } = useCurrentUserProfile();
     const [profileUsername, setProfileUsername] = useState("");
     const [aboutMe, setAboutMe] = useState("Over mij...");
@@ -21,77 +58,45 @@ export default function AccompanistProfile() {
     const [isUploadingPicture, setIsUploadingPicture] = useState(false);
     const [profileMessage, setProfileMessage] = useState<string | null>(null);
     const [profileError, setProfileError] = useState<string | null>(null);
-    
-    const artists = [
-        { id:1, name: "Artist 1", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+1&background=random" },
-        { id:2, name: "Artist 2", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+2&background=random" },
-        { id:3, name: "Artist 3", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+3&background=random" },
-        { id:4, name: "Artist 4", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+4&background=random" },
-        { id:5, name: "Artist 5", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+5&background=random" },
-        { id:6, name: "Artist 6", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+6&background=random" },
-        { id:7, name: "Artist 7", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+7&background=random" },
-        { id:8, name: "Artist 8", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+8&background=random" },
-        { id:9, name: "Artist 9", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+9&background=random" },
-        { id:10, name: "Artist 10", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+10&background=random" },
-        { id:11, name: "Artist 11", description: "description...", profile_url: "https://ui-avatars.com/api/?name=Artist+11&background=random" },
-    ];
-    
-    const itemsPerProfilePage = 6;
-    const totalPages = Math.ceil(artists.length / itemsPerProfilePage);
-    
-    const nextArtists = () => {
-        setCurrentPage((prev) => (prev + 1) % totalPages);
-    };
-    
-    const prevArtists = () => {
-        setCurrentPage((prev) => (prev - 1 + totalPages) % totalPages);
-    };
+    const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+    const [managedArtists, setManagedArtists] = useState<ManagedArtist[]>([]);
+    const [isLoadingManagedArtists, setIsLoadingManagedArtists] = useState(true);
+    const [managementError, setManagementError] = useState<string | null>(null);
+    const [managementMessage, setManagementMessage] = useState<string | null>(null);
+    const [newArtistUsername, setNewArtistUsername] = useState("");
+    const [newArtistEmail, setNewArtistEmail] = useState("");
+    const [newArtistPassword, setNewArtistPassword] = useState("");
+    const [isCreatingArtist, setIsCreatingArtist] = useState(false);
+    const [updatingArtistId, setUpdatingArtistId] = useState<number | null>(null);
+    const [artistAboutMeDrafts, setArtistAboutMeDrafts] = useState<Record<number, string>>({});
+    const [savingAboutMeArtistId, setSavingAboutMeArtistId] = useState<number | null>(null);
+    const [managedArtworks, setManagedArtworks] = useState<ManagedArtwork[]>([]);
+    const [isLoadingManagedArtworks, setIsLoadingManagedArtworks] = useState(true);
+    const [managedArtworksError, setManagedArtworksError] = useState<string | null>(null);
+    const [pendingActionArtistId, setPendingActionArtistId] = useState<number | null>(null);
+    const [incomingChangesMessage, setIncomingChangesMessage] = useState<string | null>(null);
+    const [incomingChangesError, setIncomingChangesError] = useState<string | null>(null);
 
-    const [currentArtworkPage, setCurrentArtworkPage] = useState(0);
-    
-    // Bij gebrek aan een echte database voeg ik een paar extra placeholder artworks toe 
-    // zodat de paginering hier ook goed te zien is.
-    const artworks = [
-        { id:1, name: "Art name 1", artist: "Artist 1", description: "Description...", image_url: "https://placehold.co/600x400" },
-        { id:2, name: "Art name 2", artist: "Artist 2", description: "Description...", image_url: "https://placehold.co/600x400" },
-        { id:3, name: "Art name 3", artist: "Artist 3", description: "Description...", image_url: "https://placehold.co/600x400" },
-        { id:4, name: "Art name 4", artist: "Artist 4", description: "Description...", image_url: "https://placehold.co/600x400" },
-        { id:5, name: "Art name 5", artist: "Artist 5", description: "Description...", image_url: "https://placehold.co/600x400" },
-    ];
-    
-    const itemsPerArtworkPage = 6;
-    const totalArtworkPages = Math.ceil(artworks.length / itemsPerArtworkPage);
-    
-    const nextArtworks = () => {
-        setCurrentArtworkPage((prev) => (prev + 1) % totalArtworkPages);
-    };
-    
-    const prevArtworks = () => {
-        setCurrentArtworkPage((prev) => (prev - 1 + totalArtworkPages) % totalArtworkPages);
-    };
+    const fetchManagedArtists = async (email: string) => {
+        const response = await fetch(`/api/accompanist/artists?email=${encodeURIComponent(email)}`, {
+            method: "GET",
+            cache: "no-store",
+        });
 
-    const [currentApprovedArtworkPage, setCurrentApprovedArtworkPage] = useState(0);
-    
-    const approvedArtworks = [
-        { id:1, name: "Approved Art 1", artist: "Artist 1", description: "Beautiful approved portrait...", image_url: "https://placehold.co/600x400" },
-        { id:2, name: "Approved Art 2", artist: "Artist 2", description: "Amazing landscape...", image_url: "https://placehold.co/600x400" },
-        { id:3, name: "Approved Art 3", artist: "Artist 3", description: "Abstract approved piece...", image_url: "https://placehold.co/600x400" },
-        { id:4, name: "Approved Art 4", artist: "Artist 4", description: "Modern art...", image_url: "https://placehold.co/600x400" },
-        { id:5, name: "Approved Art 5", artist: "Artist 5", description: "A sculpture description...", image_url: "https://placehold.co/600x400" },
-        { id:6, name: "Approved Art 6", artist: "Artist 5", description: "Another approved piece...", image_url: "https://placehold.co/600x400" },
-        { id:7, name: "Approved Art 7", artist: "Artist 6", description: "Oil painting...", image_url: "https://placehold.co/600x400" },
-        { id:8, name: "Approved Art 8", artist: "Artist 6", description: "Watercolor painting...", image_url: "https://placehold.co/600x400" },
-    ];
-    
-    const itemsPerApprovedArtworkPage = 6;
-    const totalApprovedArtworkPages = Math.ceil(approvedArtworks.length / itemsPerApprovedArtworkPage);
-    
-    const nextApprovedArtworks = () => {
-        setCurrentApprovedArtworkPage((prev) => (prev + 1) % totalApprovedArtworkPages);
-    };
-    
-    const prevApprovedArtworks = () => {
-        setCurrentApprovedArtworkPage((prev) => (prev - 1 + totalApprovedArtworkPages) % totalApprovedArtworkPages);
+        const responseText = await response.text();
+        const result = (() => {
+            try {
+                return JSON.parse(responseText) as { error?: string; artists?: ManagedArtist[] };
+            } catch {
+                return null;
+            }
+        })();
+
+        return {
+            ok: response.ok,
+            error: result?.error ?? null,
+            artists: result?.artists ?? [],
+        };
     };
 
     useEffect(() => {
@@ -141,6 +146,349 @@ export default function AccompanistProfile() {
             isMounted = false;
         };
     }, [role, username]);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadManagedArtists = async () => {
+            const supabase = createClient();
+            const {
+                data: { user },
+            } = await supabase.auth.getUser();
+
+            const email = user?.email?.trim().toLowerCase() ?? null;
+            if (!email || !isMounted) {
+                if (isMounted) setIsLoadingManagedArtists(false);
+                return;
+            }
+
+            setCurrentUserEmail(email);
+            setManagementError(null);
+            setIsLoadingManagedArtists(true);
+
+            const result = await fetchManagedArtists(email);
+
+            if (!isMounted) return;
+
+            if (!result.ok) {
+                setManagementError(result.error ?? "Kon artiestenlijst niet ophalen.");
+                setIsLoadingManagedArtists(false);
+                return;
+            }
+
+            setManagedArtists(result.artists);
+            setArtistAboutMeDrafts(
+                Object.fromEntries(result.artists.map((artist) => [artist.id, artist.aboutMe ?? ""])),
+            );
+            setIsLoadingManagedArtists(false);
+        };
+
+        void loadManagedArtists();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadManagedArtworks = async () => {
+            setIsLoadingManagedArtworks(true);
+            setManagedArtworksError(null);
+
+            const response = await fetch("/api/admin/artworks", {
+                method: "GET",
+                cache: "no-store",
+            });
+
+            const responseText = await response.text();
+            const result = (() => {
+                try {
+                    return JSON.parse(responseText) as {
+                        error?: string;
+                        artworks?: ManagedArtwork[];
+                    };
+                } catch {
+                    return null;
+                }
+            })();
+
+            if (!isMounted) return;
+
+            if (!response.ok) {
+                setManagedArtworksError(result?.error ?? "Kon kunstwerken niet ophalen.");
+                setIsLoadingManagedArtworks(false);
+                return;
+            }
+
+            const artistEmails = new Set(
+                managedArtists.map((artist) => artist.email.trim().toLowerCase()).filter((value) => value.length > 0),
+            );
+
+            const filtered = (result?.artworks ?? []).filter((artwork) => {
+                const email = artwork.artistEmail?.trim().toLowerCase();
+                if (!email) return false;
+                return artistEmails.has(email);
+            });
+
+            setManagedArtworks(filtered);
+            setIsLoadingManagedArtworks(false);
+        };
+
+        if (managedArtists.length === 0) {
+            setManagedArtworks([]);
+            setIsLoadingManagedArtworks(false);
+            return () => {
+                isMounted = false;
+            };
+        }
+
+        void loadManagedArtworks();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [managedArtists]);
+
+    const pendingArtworks = managedArtworks.filter((artwork) => artwork.status === "pending");
+    const approvedArtworks = managedArtworks.filter((artwork) => artwork.status === "approved");
+    const pendingProfileArtists = managedArtists.filter((artist) => artist.pendingProfileChanges);
+
+    const handleCreateArtistAccount = async () => {
+        if (!currentUserEmail) {
+            setManagementError("Je bent niet ingelogd als begeleider.");
+            return;
+        }
+
+        if (!newArtistUsername.trim() || !newArtistEmail.trim() || newArtistPassword.length < 8) {
+            setManagementError("Vul gebruikersnaam, e-mail en wachtwoord (min. 8 tekens) in.");
+            return;
+        }
+
+        setIsCreatingArtist(true);
+        setManagementError(null);
+        setManagementMessage(null);
+
+        const response = await fetch("/api/accompanist/artists", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                accompanistEmail: currentUserEmail,
+                username: newArtistUsername,
+                email: newArtistEmail,
+                password: newArtistPassword,
+            }),
+        });
+
+        const responseText = await response.text();
+        const result = (() => {
+            try {
+                return JSON.parse(responseText) as { error?: string };
+            } catch {
+                return null;
+            }
+        })();
+
+        if (!response.ok) {
+            setManagementError(result?.error ?? "Artiestaccount aanmaken is mislukt.");
+            setIsCreatingArtist(false);
+            return;
+        }
+
+        const refreshResult = await fetchManagedArtists(currentUserEmail);
+
+        if (refreshResult.ok) {
+            setManagedArtists(refreshResult.artists);
+            setArtistAboutMeDrafts(
+                Object.fromEntries(refreshResult.artists.map((artist) => [artist.id, artist.aboutMe ?? ""])),
+            );
+        }
+
+        setNewArtistUsername("");
+        setNewArtistEmail("");
+        setNewArtistPassword("");
+        setManagementMessage("Artiestaccount aangemaakt. Stel nu de rechten in.");
+        setIsCreatingArtist(false);
+    };
+
+    const handlePendingProfileDecision = async (artistId: number, decision: "approve" | "deny") => {
+        if (!currentUserEmail) {
+            setIncomingChangesError("Je bent niet ingelogd als begeleider.");
+            return;
+        }
+
+        setPendingActionArtistId(artistId);
+        setIncomingChangesError(null);
+        setIncomingChangesMessage(null);
+        setManagementError(null);
+
+        const response = await fetch(`/api/accompanist/artists/${artistId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                accompanistEmail: currentUserEmail,
+                approvePendingChanges: decision === "approve",
+                denyPendingChanges: decision === "deny",
+            }),
+        });
+
+        const responseText = await response.text();
+        const result = (() => {
+            try {
+                return JSON.parse(responseText) as { error?: string };
+            } catch {
+                return null;
+            }
+        })();
+
+        if (!response.ok) {
+            setIncomingChangesError(result?.error ?? "Kon profielwijziging niet verwerken.");
+            setPendingActionArtistId(null);
+            return;
+        }
+
+        const refreshResult = await fetchManagedArtists(currentUserEmail);
+
+        if (!refreshResult.ok) {
+            setIncomingChangesError(refreshResult.error ?? "Goedkeuring verwerkt, maar overzicht vernieuwen mislukte.");
+            setPendingActionArtistId(null);
+            return;
+        }
+
+        setManagedArtists(refreshResult.artists);
+        setArtistAboutMeDrafts(
+            Object.fromEntries(refreshResult.artists.map((artist) => [artist.id, artist.aboutMe ?? ""])),
+        );
+        setIncomingChangesMessage(
+            decision === "approve" ? "Profielwijziging goedgekeurd." : "Profielwijziging afgewezen.",
+        );
+        setPendingActionArtistId(null);
+    };
+
+    const handleTogglePermission = async (
+        artist: ManagedArtist,
+        permissionKey:
+            | "canAddArtworks"
+            | "canEditArtworks"
+            | "canUseChat"
+            | "canEditProfilePic"
+            | "canEditUsername"
+            | "canEditAboutMe",
+    ) => {
+        if (!currentUserEmail) return;
+
+        setUpdatingArtistId(artist.id);
+        setManagementError(null);
+        setManagementMessage(null);
+
+        const nextPermissions = {
+            canAddArtworks: artist.permissions.canAddArtworks,
+            canEditArtworks: artist.permissions.canEditArtworks,
+            canUseChat: artist.permissions.canUseChat,
+            canEditProfilePic: artist.permissions.canEditProfilePic,
+            canEditUsername: artist.permissions.canEditUsername,
+            canEditAboutMe: artist.permissions.canEditAboutMe,
+            [permissionKey]: !artist.permissions[permissionKey],
+        };
+
+        const response = await fetch("/api/accompanist/artists", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                accompanistEmail: currentUserEmail,
+                artistUserId: artist.id,
+                canAddArtworks: nextPermissions.canAddArtworks,
+                canEditArtworks: nextPermissions.canEditArtworks,
+                canUseChat: nextPermissions.canUseChat,
+                canEditProfilePic: nextPermissions.canEditProfilePic,
+                canEditUsername: nextPermissions.canEditUsername,
+                canEditAboutMe: nextPermissions.canEditAboutMe,
+            }),
+        });
+
+        const responseText = await response.text();
+        const result = (() => {
+            try {
+                return JSON.parse(responseText) as { error?: string };
+            } catch {
+                return null;
+            }
+        })();
+
+        if (!response.ok) {
+            setManagementError(result?.error ?? "Permissie bijwerken mislukt.");
+            setUpdatingArtistId(null);
+            return;
+        }
+
+        setManagedArtists((current) =>
+            current.map((item) =>
+                item.id === artist.id
+                    ? {
+                          ...item,
+                          permissions: {
+                              canAddArtworks: nextPermissions.canAddArtworks,
+                              canEditArtworks: nextPermissions.canEditArtworks,
+                              canUseChat: nextPermissions.canUseChat,
+                              canEditProfilePic: nextPermissions.canEditProfilePic,
+                              canEditUsername: nextPermissions.canEditUsername,
+                              canEditAboutMe: nextPermissions.canEditAboutMe,
+                          },
+                      }
+                    : item,
+            ),
+        );
+        setManagementMessage("Rechten bijgewerkt.");
+        setUpdatingArtistId(null);
+    };
+
+    const handleSaveArtistAboutMe = async (artist: ManagedArtist) => {
+        if (!currentUserEmail) return;
+
+        const draft = artistAboutMeDrafts[artist.id] ?? "";
+
+        setSavingAboutMeArtistId(artist.id);
+        setManagementError(null);
+        setManagementMessage(null);
+
+        const response = await fetch("/api/accompanist/artists", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                accompanistEmail: currentUserEmail,
+                artistUserId: artist.id,
+                canAddArtworks: artist.permissions.canAddArtworks,
+                canEditArtworks: artist.permissions.canEditArtworks,
+                canUseChat: artist.permissions.canUseChat,
+                canEditProfilePic: artist.permissions.canEditProfilePic,
+                canEditUsername: artist.permissions.canEditUsername,
+                canEditAboutMe: artist.permissions.canEditAboutMe,
+                aboutMe: draft,
+            }),
+        });
+
+        const responseText = await response.text();
+        const result = (() => {
+            try {
+                return JSON.parse(responseText) as { error?: string };
+            } catch {
+                return null;
+            }
+        })();
+
+        if (!response.ok) {
+            setManagementError(result?.error ?? "About me bijwerken mislukt.");
+            setSavingAboutMeArtistId(null);
+            return;
+        }
+
+        setManagedArtists((current) =>
+            current.map((item) => (item.id === artist.id ? { ...item, aboutMe: draft } : item)),
+        );
+        setManagementMessage("About me bijgewerkt.");
+        setSavingAboutMeArtistId(null);
+    };
 
     const openEditProfile = () => {
         setEditUsername(profileUsername || username);
@@ -286,9 +634,9 @@ export default function AccompanistProfile() {
                         </div>
                         
                         <div className="flex gap-3 mt-4 md:mt-0">
-                            <Link href="" className="px-6 py-2 bg-purple-600 text-white font-medium rounded-full hover:bg-purple-700 transition">
+                            <a href="#artists-rights" className="px-6 py-2 bg-purple-600 text-white font-medium rounded-full hover:bg-purple-700 transition">
                                 Account Aanmaken
-                            </Link>
+                            </a>
                             <button type="button" onClick={openEditProfile} className="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded-full hover:bg-gray-200 transition">
                                 Edit Profile
                             </button>
@@ -311,124 +659,424 @@ export default function AccompanistProfile() {
                 </p>
             )}
 
+            <div id="artists-rights" className="mb-10 rounded-2xl border border-violet-200/70 bg-white p-5 shadow-sm">
+                <div className="flex flex-col gap-1">
+                    <h2 className="text-xl font-bold text-zinc-900">Artiestenaccounts & rechten</h2>
+                    <p className="text-sm text-zinc-600">
+                        Maak artiestaccounts aan en beheer wat zij mogen doen op het platform.
+                    </p>
+                </div>
+
+                {(managementError || managementMessage) && (
+                    <p
+                        className={`mt-4 rounded-lg px-3 py-2 text-sm ${
+                            managementError ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"
+                        }`}
+                    >
+                        {managementError ?? managementMessage}
+                    </p>
+                )}
+
+                <div className="mt-4 grid gap-3 md:grid-cols-4">
+                    <input
+                        type="text"
+                        value={newArtistUsername}
+                        onChange={(event) => setNewArtistUsername(event.target.value)}
+                        placeholder="Gebruikersnaam artiest"
+                        className="rounded-xl border border-zinc-200 px-3 py-2 text-sm text-zinc-800"
+                    />
+                    <input
+                        type="email"
+                        value={newArtistEmail}
+                        onChange={(event) => setNewArtistEmail(event.target.value)}
+                        placeholder="E-mail artiest"
+                        className="rounded-xl border border-zinc-200 px-3 py-2 text-sm text-zinc-800"
+                    />
+                    <input
+                        type="password"
+                        value={newArtistPassword}
+                        onChange={(event) => setNewArtistPassword(event.target.value)}
+                        placeholder="Tijdelijk wachtwoord"
+                        className="rounded-xl border border-zinc-200 px-3 py-2 text-sm text-zinc-800"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => void handleCreateArtistAccount()}
+                        disabled={isCreatingArtist}
+                        className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-60"
+                    >
+                        {isCreatingArtist ? "Aanmaken..." : "Artiestaccount aanmaken"}
+                    </button>
+                </div>
+
+                <div className="mt-5 space-y-3">
+                    {isLoadingManagedArtists ? (
+                        <div className="rounded-xl bg-violet-50 px-4 py-3 text-sm text-violet-700 ring-1 ring-violet-200">
+                            Artiesten laden...
+                        </div>
+                    ) : managedArtists.length === 0 ? (
+                        <div className="rounded-xl bg-zinc-50 px-4 py-3 text-sm text-zinc-600 ring-1 ring-zinc-200">
+                            Er zijn nog geen artiestaccounts gekoppeld aan jouw begeleider-profiel.
+                        </div>
+                    ) : (
+                        managedArtists.map((artist) => (
+                            <div
+                                key={artist.id}
+                                className="rounded-xl border border-zinc-200 bg-zinc-50/70 px-4 py-3"
+                            >
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <div>
+                                        <p className="text-sm font-semibold text-zinc-900">
+                                            {artist.username || artist.email}
+                                        </p>
+                                        <p className="text-xs text-zinc-500">{artist.email}</p>
+                                    </div>
+                                    <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-zinc-700 ring-1 ring-zinc-200">
+                                        {artist.blocked ? "Geblokkeerd" : artist.status ?? "Onbekend"}
+                                    </span>
+                                </div>
+
+                                <div className="mt-3 grid gap-2 md:grid-cols-3">
+                                    {[
+                                        { key: "canAddArtworks", label: "Kunstwerken toevoegen" },
+                                        { key: "canEditArtworks", label: "Kunstwerken bewerken" },
+                                        { key: "canUseChat", label: "Chat gebruiken (later)" },
+                                        { key: "canEditProfilePic", label: "Profielfoto wijzigen" },
+                                        { key: "canEditUsername", label: "Gebruikersnaam wijzigen" },
+                                        { key: "canEditAboutMe", label: "About me wijzigen" },
+                                    ].map((right) => {
+                                        const permissionKey = right.key as
+                                            | "canAddArtworks"
+                                            | "canEditArtworks"
+                                            | "canUseChat"
+                                            | "canEditProfilePic"
+                                            | "canEditUsername"
+                                            | "canEditAboutMe";
+                                        const enabled = artist.permissions[permissionKey];
+
+                                        return (
+                                            <button
+                                                key={right.key}
+                                                type="button"
+                                                onClick={() => void handleTogglePermission(artist, permissionKey)}
+                                                disabled={updatingArtistId === artist.id}
+                                                className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm transition ${
+                                                    enabled
+                                                        ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                                                        : "border-zinc-300 bg-white text-zinc-700"
+                                                } disabled:opacity-60`}
+                                            >
+                                                <span>{right.label}</span>
+                                                <span
+                                                    className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                                        enabled
+                                                            ? "bg-emerald-100 text-emerald-700"
+                                                            : "bg-zinc-100 text-zinc-500"
+                                                    }`}
+                                                >
+                                                    {enabled ? "Aan" : "Uit"}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="mt-3">
+                                    <label className="block text-xs font-semibold text-zinc-700">About me</label>
+                                    <textarea
+                                        value={artistAboutMeDrafts[artist.id] ?? artist.aboutMe ?? ""}
+                                        onChange={(event) =>
+                                            setArtistAboutMeDrafts((current) => ({
+                                                ...current,
+                                                [artist.id]: event.target.value,
+                                            }))
+                                        }
+                                        rows={3}
+                                        className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-800"
+                                        placeholder="About me van deze artiest"
+                                    />
+                                    <div className="mt-2 flex justify-end">
+                                        <button
+                                            type="button"
+                                            onClick={() => void handleSaveArtistAboutMe(artist)}
+                                            disabled={savingAboutMeArtistId === artist.id}
+                                            className="rounded-full bg-violet-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-60"
+                                        >
+                                            {savingAboutMeArtistId === artist.id ? "Opslaan..." : "About me opslaan"}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+
+            <div className="mb-12 rounded-2xl border border-amber-200/80 bg-white p-5 shadow-sm">
+                <div className="flex flex-col gap-1">
+                    <h2 className="text-xl font-bold text-zinc-900">Binnenkomende profielwijzigingen</h2>
+                    <p className="text-sm text-zinc-600">
+                        Bekijk snel welke artiesten profielaanpassingen hebben ingestuurd en keur ze direct goed of af.
+                    </p>
+                </div>
+
+                {(incomingChangesError || incomingChangesMessage) && (
+                    <p
+                        className={`mt-4 rounded-lg px-3 py-2 text-sm ${
+                            incomingChangesError ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"
+                        }`}
+                    >
+                        {incomingChangesError ?? incomingChangesMessage}
+                    </p>
+                )}
+
+                {isLoadingManagedArtists ? (
+                    <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700">
+                        Inkomende wijzigingen laden...
+                    </div>
+                ) : pendingProfileArtists.length === 0 ? (
+                    <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+                        Er zijn nu geen profielwijzigingen die op jouw beoordeling wachten.
+                    </div>
+                ) : (
+                    <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                        {pendingProfileArtists.map((artist) => {
+                            const pending = artist.pendingProfileChanges;
+
+                            if (!pending) {
+                                return null;
+                            }
+
+                            return (
+                                <div
+                                    key={artist.id}
+                                    className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4 shadow-sm"
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="flex items-center gap-3">
+                                            <img
+                                                className="h-12 w-12 rounded-full object-cover ring-2 ring-white"
+                                                src={
+                                                    pending.proposedProfilePic ||
+                                                    artist.profilePic ||
+                                                    `https://ui-avatars.com/api/?name=${encodeURIComponent(artist.username || artist.email)}&background=random`
+                                                }
+                                                alt={artist.username || artist.email}
+                                            />
+                                            <div>
+                                                <Link
+                                                    href={`/profile/accompanist/artists/${artist.id}`}
+                                                    className="text-sm font-semibold text-zinc-900 hover:text-violet-700"
+                                                >
+                                                    {artist.username || artist.email}
+                                                </Link>
+                                                <p className="text-xs text-zinc-500">{artist.email}</p>
+                                            </div>
+                                        </div>
+                                        <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-200">
+                                            Wacht op beoordeling
+                                        </span>
+                                    </div>
+
+                                    <div className="mt-4 space-y-3 text-sm text-zinc-700">
+                                        {pending.createdAt && (
+                                            <p className="text-xs text-zinc-500">
+                                                Ingestuurd op {new Date(pending.createdAt).toLocaleString("nl-NL")}
+                                            </p>
+                                        )}
+
+                                        {typeof pending.proposedUsername === "string" && pending.proposedUsername !== artist.username && (
+                                            <div className="rounded-xl bg-white px-3 py-2 ring-1 ring-amber-100">
+                                                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Gebruikersnaam</p>
+                                                <p className="mt-1 text-xs text-zinc-500">Huidig: {artist.username || "-"}</p>
+                                                <p className="text-sm font-medium text-zinc-900">Nieuw: {pending.proposedUsername || "-"}</p>
+                                            </div>
+                                        )}
+
+                                        {typeof pending.proposedAboutMe === "string" && pending.proposedAboutMe !== artist.aboutMe && (
+                                            <div className="rounded-xl bg-white px-3 py-2 ring-1 ring-amber-100">
+                                                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">About me</p>
+                                                <p className="mt-1 text-xs text-zinc-500 line-clamp-3">Huidig: {artist.aboutMe || "Nog geen about me ingevuld."}</p>
+                                                <p className="mt-1 text-sm text-zinc-900 line-clamp-4">Nieuw: {pending.proposedAboutMe || "Leeg gemaakt"}</p>
+                                            </div>
+                                        )}
+
+                                        {typeof pending.proposedProfilePic === "string" && pending.proposedProfilePic !== artist.profilePic && (
+                                            <div className="rounded-xl bg-white px-3 py-2 ring-1 ring-amber-100">
+                                                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Profielfoto</p>
+                                                <div className="mt-2 flex items-center gap-3">
+                                                    <img
+                                                        className="h-14 w-14 rounded-full object-cover ring-1 ring-zinc-200"
+                                                        src={artist.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(artist.username || artist.email)}&background=random`}
+                                                        alt={`${artist.username || artist.email} huidige profielfoto`}
+                                                    />
+                                                    <span className="text-xs font-semibold text-zinc-400">→</span>
+                                                    <img
+                                                        className="h-14 w-14 rounded-full object-cover ring-1 ring-amber-200"
+                                                        src={pending.proposedProfilePic}
+                                                        alt={`${artist.username || artist.email} voorgestelde profielfoto`}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                                        <Link
+                                            href={`/profile/accompanist/artists/${artist.id}`}
+                                            className="text-sm font-medium text-violet-700 hover:text-violet-800"
+                                        >
+                                            Open volledig profiel
+                                        </Link>
+                                        <div className="flex gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => void handlePendingProfileDecision(artist.id, "deny")}
+                                                disabled={pendingActionArtistId === artist.id}
+                                                className="rounded-full border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+                                            >
+                                                {pendingActionArtistId === artist.id ? "Verwerken..." : "Afwijzen"}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => void handlePendingProfileDecision(artist.id, "approve")}
+                                                disabled={pendingActionArtistId === artist.id}
+                                                className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                                            >
+                                                {pendingActionArtistId === artist.id ? "Verwerken..." : "Goedkeuren"}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+
             {/* Artists Section */}
             <div>
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-gray-900">Mijn Artiesten</h2>
-                    {totalPages > 1 && (
-                        <div className="flex items-center gap-4 bg-white px-4 py-1.5 rounded-full border border-gray-200 shadow-sm">
-                            <button onClick={prevArtists} className="p-1 rounded-full hover:bg-gray-100 text-gray-600 transition" title="Vorige">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                            </button>
-                            <span className="text-sm font-bold text-purple-700 min-w-[3rem] text-center">
-                                {currentPage + 1} / {totalPages}
-                            </span>
-                            <button onClick={nextArtists} className="p-1 rounded-full hover:bg-gray-100 text-gray-600 transition" title="Volgende">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                            </button>
-                        </div>
-                    )}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {artists.slice(currentPage * itemsPerProfilePage, (currentPage + 1) * itemsPerProfilePage).map((artist, index) => (
-                        <div key={index} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition relative flex flex-col items-center text-center group">
-                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                                <button className="text-gray-400 hover:text-amber-500 hover:bg-amber-50 p-2 rounded-full transition" title="Pas account aan">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
-                                </button>
-                                <button className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-full transition" title="Verwijder account">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                                </button>
+                {isLoadingManagedArtists ? (
+                    <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700">
+                        Artiesten laden...
+                    </div>
+                ) : managedArtists.length === 0 ? (
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                        Nog geen artiesten gekoppeld.
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {managedArtists.map((artist) => (
+                            <div key={artist.id} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition relative flex flex-col items-center text-center group">
+                                <Link href={`/profile/accompanist/artists/${artist.id}`} className="w-20 h-20 rounded-full overflow-hidden mb-4 border-2 border-transparent group-hover:border-blue-500 transition cursor-pointer mt-1 block">
+                                    <img
+                                        className="w-full h-full object-cover"
+                                        src={
+                                            artist.profilePic ||
+                                            `https://ui-avatars.com/api/?name=${encodeURIComponent(artist.username || artist.email)}&background=random`
+                                        }
+                                        alt={artist.username || artist.email}
+                                    />
+                                </Link>
+                                <Link href={`/profile/accompanist/artists/${artist.id}`} className="font-bold text-gray-900 text-lg cursor-pointer hover:text-blue-600 transition">
+                                    {artist.username || artist.email}
+                                </Link>
+                                <p className="text-sm text-gray-500 line-clamp-1 mt-1">{artist.email}</p>
+                                <p className="text-xs text-gray-500 line-clamp-2 mt-1">
+                                    {artist.aboutMe || "Geen about me ingevuld."}
+                                </p>
+                                {artist.hasPendingProfileChanges && (
+                                    <span className="mt-2 inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-200">
+                                        Wacht op jouw goedkeuring
+                                    </span>
+                                )}
                             </div>
-                            <div className="w-20 h-20 rounded-full overflow-hidden mb-4 border-2 border-transparent group-hover:border-blue-500 transition cursor-pointer mt-1">
-                                <img className="w-full h-full object-cover" src={artist.profile_url} alt={artist.name} />
-                            </div>
-                            <h3 className="font-bold text-gray-900 text-lg cursor-pointer hover:text-blue-600 transition">{artist.name}</h3>
-                            <p className="text-sm text-gray-500 line-clamp-2 mt-1">{artist.description}</p>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Pending Artworks Section */}
             <div className="mt-12">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-gray-900">Te Keuren Kunstwerken</h2>
-                    {totalArtworkPages > 1 && (
-                        <div className="flex items-center gap-4 bg-white px-4 py-1.5 rounded-full border border-gray-200 shadow-sm">
-                            <button onClick={prevArtworks} className="p-1 rounded-full hover:bg-gray-100 text-gray-600 transition" title="Vorige">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                            </button>
-                            <span className="text-sm font-bold text-purple-700 min-w-[3rem] text-center">
-                                {currentArtworkPage + 1} / {totalArtworkPages}
-                            </span>
-                            <button onClick={nextArtworks} className="p-1 rounded-full hover:bg-gray-100 text-gray-600 transition" title="Volgende">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                            </button>
-                        </div>
-                    )}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {artworks.slice(currentArtworkPage * itemsPerArtworkPage, (currentArtworkPage + 1) * itemsPerArtworkPage).map((artwork, index) => (
-                        <div key={index} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-                            <div className="h-48 w-full overflow-hidden">
-                                <img src={artwork.image_url} alt={artwork.name} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
-                            </div>
-                            <div className="p-5 flex-grow flex flex-col">
-                                <h3 className="font-bold text-gray-900 text-lg mb-1">{artwork.name}</h3>
-                                <p className="text-sm text-purple-600 font-medium mb-3">Door: {artwork.artist}</p>
-                                <p className="text-sm text-gray-600 mb-4 line-clamp-2">{artwork.description}</p>
-                                <div className="mt-auto flex gap-2">
-                                    <button className="flex-1 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition">
-                                        Goedkeuren
-                                    </button>
-                                    <button className="flex-1 py-2 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition">
-                                        Afkeuren
-                                    </button>
+                {isLoadingManagedArtworks ? (
+                    <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700">
+                        Kunstwerken laden...
+                    </div>
+                ) : managedArtworksError ? (
+                    <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                        {managedArtworksError}
+                    </div>
+                ) : pendingArtworks.length === 0 ? (
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                        Geen te keuren kunstwerken.
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {pendingArtworks.map((artwork) => (
+                            <div key={artwork.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                                <div className="h-48 w-full overflow-hidden">
+                                    <img src={artwork.imageUrl} alt={artwork.title} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                                </div>
+                                <div className="p-5 flex-grow flex flex-col">
+                                    <h3 className="font-bold text-gray-900 text-lg mb-1">{artwork.title}</h3>
+                                    <p className="text-sm text-purple-600 font-medium mb-3">Door: {artwork.artistName}</p>
+                                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">{artwork.description || "Geen beschrijving"}</p>
+                                    <div className="mt-auto">
+                                        <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                                            Wacht op admin goedkeuring
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Approved Artworks Section */}
             <div className="mt-12">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-gray-900">Gepubliceerde Kunstwerken</h2>
-                    {totalApprovedArtworkPages > 1 && (
-                        <div className="flex items-center gap-4 bg-white px-4 py-1.5 rounded-full border border-gray-200 shadow-sm">
-                            <button onClick={prevApprovedArtworks} className="p-1 rounded-full hover:bg-gray-100 text-gray-600 transition" title="Vorige">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                            </button>
-                            <span className="text-sm font-bold text-purple-700 min-w-[3rem] text-center">
-                                {currentApprovedArtworkPage + 1} / {totalApprovedArtworkPages}
-                            </span>
-                            <button onClick={nextApprovedArtworks} className="p-1 rounded-full hover:bg-gray-100 text-gray-600 transition" title="Volgende">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                            </button>
-                        </div>
-                    )}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {approvedArtworks.slice(currentApprovedArtworkPage * itemsPerApprovedArtworkPage, (currentApprovedArtworkPage + 1) * itemsPerApprovedArtworkPage).map((artwork, index) => (
-                        <div key={index} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-                            <div className="h-48 w-full overflow-hidden">
-                                <img src={artwork.image_url} alt={artwork.name} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
-                            </div>
-                            <div className="p-5 flex-grow flex flex-col">
-                                <h3 className="font-bold text-gray-900 text-lg mb-1">{artwork.name}</h3>
-                                <p className="text-sm text-purple-600 font-medium mb-3">Door: {artwork.artist}</p>
-                                <p className="text-sm text-gray-600 mb-4 line-clamp-2">{artwork.description}</p>
-                                <div className="mt-auto flex gap-2">
-                                    <button className="flex-1 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition">
-                                        Bekijken
-                                    </button>
+                {isLoadingManagedArtworks ? (
+                    <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700">
+                        Kunstwerken laden...
+                    </div>
+                ) : managedArtworksError ? (
+                    <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                        {managedArtworksError}
+                    </div>
+                ) : approvedArtworks.length === 0 ? (
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                        Geen gepubliceerde kunstwerken.
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {approvedArtworks.map((artwork) => (
+                            <div key={artwork.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                                <div className="h-48 w-full overflow-hidden">
+                                    <img src={artwork.imageUrl} alt={artwork.title} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                                </div>
+                                <div className="p-5 flex-grow flex flex-col">
+                                    <h3 className="font-bold text-gray-900 text-lg mb-1">{artwork.title}</h3>
+                                    <p className="text-sm text-purple-600 font-medium mb-3">Door: {artwork.artistName}</p>
+                                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">{artwork.description || "Geen beschrijving"}</p>
+                                    <div className="mt-auto">
+                                        <span className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                                            Gepubliceerd
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
 

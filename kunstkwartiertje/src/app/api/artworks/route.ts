@@ -3,6 +3,37 @@ import { createAdminClient } from "src/utils/supabase/admin";
 
 type ArtworkStatus = "pending" | "approved" | "denied";
 
+const checkManagedArtistPermission = async (params: {
+    supabase: any;
+    artistUserId: number;
+    permissionColumn: "can_add_artworks" | "can_edit_artworks";
+}) => {
+    const { supabase, artistUserId, permissionColumn } = params;
+
+    const { data, error } = await supabase
+        .from("accompanist_artist_permissions")
+        .select(`accompanist_user_id, ${permissionColumn}`)
+        .eq("artist_user_id", artistUserId);
+
+    if (error) {
+        // table missing => do not block existing flows
+        if (error.code === "42P01") return { allowed: true, reason: null as string | null };
+        return { allowed: false, reason: error.message };
+    }
+
+    // If no accompanist links exist, artist is unmanaged and allowed by default.
+    if (!data || data.length === 0) {
+        return { allowed: true, reason: null as string | null };
+    }
+
+    const hasPermission = data.some((row: Record<string, unknown>) => Boolean(row[permissionColumn]));
+    if (!hasPermission) {
+        return { allowed: false, reason: "Je begeleider heeft deze actie uitgeschakeld voor jouw account." };
+    }
+
+    return { allowed: true, reason: null as string | null };
+};
+
 export async function GET(request: Request) {
     const url = new URL(request.url);
     const email = url.searchParams.get("email")?.trim();
@@ -184,6 +215,16 @@ export async function POST(request: Request) {
             );
         }
 
+        const addPermission = await checkManagedArtistPermission({
+            supabase,
+            artistUserId: Number(artistUser.id),
+            permissionColumn: "can_add_artworks",
+        });
+
+        if (!addPermission.allowed) {
+            return NextResponse.json({ error: addPermission.reason ?? "Actie niet toegestaan." }, { status: 403 });
+        }
+
         const fileExt = file.name.split(".").pop() ?? "jpg";
         const filePath = `${authUserId}/${Date.now()}.${fileExt}`;
         const arrayBuffer = await file.arrayBuffer();
@@ -275,6 +316,16 @@ export async function DELETE(request: Request) {
 
         if (!artistUser?.id) {
             return NextResponse.json({ error: "Kunstenaar niet gevonden." }, { status: 404 });
+        }
+
+        const editPermission = await checkManagedArtistPermission({
+            supabase,
+            artistUserId: Number(artistUser.id),
+            permissionColumn: "can_edit_artworks",
+        });
+
+        if (!editPermission.allowed) {
+            return NextResponse.json({ error: editPermission.reason ?? "Actie niet toegestaan." }, { status: 403 });
         }
 
         const { error: deleteError } = await supabase
