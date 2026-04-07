@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-type AdminTabKey = "access" | "chat" | "kunst" | "users" | "resetpw";
+type AdminTabKey = "access" | "chat" | "kunst" | "users" | "allusers" | "resetpw";
 type RequestStatus = "pending" | "approved" | "denied";
 
 type PendingRequest = {
@@ -29,6 +29,7 @@ const adminTabs: Array<{ key: AdminTabKey; label: string }> = [
     { key: "chat", label: "Chat moderatie" },
     { key: "kunst", label: "Kunst moderatie" },
     { key: "users", label: "Geblokkeerde gebruikers" },
+    { key: "allusers", label: "Alle gebruikers" },
     { key: "resetpw", label: "Wachtwoord herstellen" },
 ];
 
@@ -53,6 +54,7 @@ const adminTabExamples: Record<AdminTabKey, string[]> = {
         "Verdacht gedrag of misbruik (bv. ban-omzeiling).",
         "Rapporten van meerdere gebruikers die samen een actie vragen.",
     ],
+    allusers: [],
     resetpw: [
         "Gebruiker wil een wachtwoordherstel aanvragen (normale flow).",
         "Herstel wordt geblokkeerd door risicovolle/potentieel frauduleuze activiteit.",
@@ -98,6 +100,12 @@ export default function AdminPage() {
     const [requestMessage, setRequestMessage] = useState<string | null>(null);
     const [blockedError, setBlockedError] = useState<string | null>(null);
     const [blockedMessage, setBlockedMessage] = useState<string | null>(null);
+    const [allUsers, setAllUsers] = useState<BlockedUser[]>([]);
+    const [isLoadingAllUsers, setIsLoadingAllUsers] = useState(true);
+    const [selectedUser, setSelectedUser] = useState<BlockedUser | null>(null);
+    const [processingBlockEmail, setProcessingBlockEmail] = useState<string | null>(null);
+    const [allUsersError, setAllUsersError] = useState<string | null>(null);
+    const [allUsersMessage, setAllUsersMessage] = useState<string | null>(null);
     const notificationRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -160,14 +168,42 @@ export default function AdminPage() {
         void loadPendingRequests();
         void loadBlockedUsers();
 
+        const loadAllUsers = async () => {
+            const response = await fetch("/api/admin/users", {
+                method: "GET",
+                cache: "no-store",
+            });
+
+            const responseText = await response.text();
+            const result = (() => {
+                try {
+                    return JSON.parse(responseText) as { error?: string; users?: BlockedUser[] };
+                } catch {
+                    return null;
+                }
+            })();
+
+            if (!response.ok) {
+                setIsLoadingAllUsers(false);
+                return;
+            }
+
+            setAllUsers(result?.users ?? []);
+            setIsLoadingAllUsers(false);
+        };
+
+        void loadAllUsers();
+
         const interval = window.setInterval(() => {
             void loadPendingRequests();
             void loadBlockedUsers();
+            void loadAllUsers();
         }, 15000);
 
         const handleFocus = () => {
             void loadPendingRequests();
             void loadBlockedUsers();
+            void loadAllUsers();
         };
 
         window.addEventListener("focus", handleFocus);
@@ -277,6 +313,49 @@ export default function AdminPage() {
         setBlockedUsers((current) => current.filter((user) => user.email !== email));
         setBlockedMessage("Gebruiker is gedeblokkeerd.");
         setProcessingBlockedEmail(null);
+    };
+
+    const handleBlockUser = async (email: string) => {
+        setProcessingBlockEmail(email);
+        setAllUsersError(null);
+        setAllUsersMessage(null);
+
+        const response = await fetch("/api/admin/users", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+        });
+
+        const responseText = await response.text();
+        const result = (() => {
+            try {
+                return JSON.parse(responseText) as { error?: string };
+            } catch {
+                return null;
+            }
+        })();
+
+        if (!response.ok) {
+            setAllUsersError(result?.error ?? "Kon gebruiker niet blokkeren.");
+            setProcessingBlockEmail(null);
+            return;
+        }
+
+        setAllUsers((current) =>
+            current.map((user) =>
+                user.email === email ? { ...user, blocked_status: true, status: "denied" as const } : user,
+            ),
+        );
+        setSelectedUser((current) =>
+            current?.email === email ? { ...current, blocked_status: true, status: "denied" as const } : current,
+        );
+        setBlockedUsers((current) => {
+            const blockedUser = allUsers.find((u) => u.email === email);
+            if (!blockedUser || current.some((u) => u.email === email)) return current;
+            return [{ ...blockedUser, blocked_status: true, status: "denied" as const }, ...current];
+        });
+        setAllUsersMessage("Gebruiker is geblokkeerd.");
+        setProcessingBlockEmail(null);
     };
 
     const pendingCount = pendingRequests.length;
@@ -437,6 +516,117 @@ export default function AdminPage() {
                 )}
             </div>
 
+            {selectedUser && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) setSelectedUser(null);
+                    }}
+                >
+                    <div className="w-full max-w-md rounded-3xl border border-purple-200/60 bg-white p-6 shadow-2xl shadow-purple-500/20">
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div
+                                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base font-bold ${
+                                        selectedUser.blocked_status
+                                            ? "bg-rose-100 text-rose-700"
+                                            : "bg-purple-100 text-purple-700"
+                                    }`}
+                                >
+                                    {(selectedUser.username ?? selectedUser.email ?? "?")[0].toUpperCase()}
+                                </div>
+                                <div>
+                                    <p className="text-base font-semibold text-zinc-900">
+                                        {selectedUser.username ?? "Onbekende gebruiker"}
+                                    </p>
+                                    <p className="text-xs text-zinc-500">{selectedUser.email ?? "Geen e-mail"}</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setSelectedUser(null)}
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 transition hover:bg-zinc-200"
+                                aria-label="Sluiten"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    className="h-4 w-4"
+                                    aria-hidden="true"
+                                >
+                                    <path d="M18 6 6 18" />
+                                    <path d="m6 6 12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="mt-5 space-y-2">
+                            <div className="flex items-center justify-between rounded-lg bg-zinc-50 px-3 py-2.5">
+                                <span className="text-xs text-zinc-500">Rol</span>
+                                <span className="text-xs font-semibold text-zinc-800">{formatRoleLabel(selectedUser.type)}</span>
+                            </div>
+                            <div className="flex items-center justify-between rounded-lg bg-zinc-50 px-3 py-2.5">
+                                <span className="text-xs text-zinc-500">Status</span>
+                                <span
+                                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ring-1 ${
+                                        selectedUser.blocked_status
+                                            ? "bg-rose-100 text-rose-700 ring-rose-200"
+                                            : selectedUser.status === "approved"
+                                                ? "bg-emerald-100 text-emerald-700 ring-emerald-200"
+                                                : selectedUser.status === "pending"
+                                                    ? "bg-amber-100 text-amber-700 ring-amber-200"
+                                                    : "bg-zinc-100 text-zinc-600 ring-zinc-200"
+                                    }`}
+                                >
+                                    {selectedUser.blocked_status
+                                        ? "Geblokkeerd"
+                                        : selectedUser.status === "approved"
+                                            ? "Goedgekeurd"
+                                            : selectedUser.status === "pending"
+                                                ? "Wachtend"
+                                                : "Geweigerd"}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between rounded-lg bg-zinc-50 px-3 py-2.5">
+                                <span className="text-xs text-zinc-500">Aangemeld op</span>
+                                <span className="text-xs font-semibold text-zinc-800">
+                                    {formatRequestDate(selectedUser.created_at)}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="mt-5 flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setSelectedUser(null)}
+                                className="rounded-full bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-200"
+                            >
+                                Sluiten
+                            </button>
+                            {!selectedUser.blocked_status ? (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (selectedUser.email) void handleBlockUser(selectedUser.email);
+                                    }}
+                                    disabled={processingBlockEmail === selectedUser.email || !selectedUser.email}
+                                    className="rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    {processingBlockEmail === selectedUser.email ? "Bezig..." : "Blokkeer gebruiker"}
+                                </button>
+                            ) : (
+                                <span className="rounded-full bg-rose-100 px-4 py-2 text-sm font-semibold text-rose-700 ring-1 ring-rose-200">
+                                    Geblokkeerd
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="mx-auto w-full max-w-6xl">
                 <div className="mb-6 rounded-xl border border-purple-200/35 bg-white/75 backdrop-blur">
                     <div className="flex min-h-16 items-center justify-between gap-4 px-6 py-4">
@@ -497,6 +687,8 @@ export default function AdminPage() {
                                         ? "Nieuwe gebruikers die nog goedkeuring nodig hebben."
                                         : activeTab === "users"
                                             ? "Overzicht van geblokkeerde gebruikers."
+                                            : activeTab === "allusers"
+                                                ? "Overzicht van alle geregistreerde gebruikers."
                                         : "Voorbeelden van mogelijke situaties:"}
                                 </div>
 
@@ -608,6 +800,117 @@ export default function AdminPage() {
                                                             >
                                                                 Deblokkeer
                                                             </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                ) : activeTab === "allusers" ? (
+                                    <div className="mt-4 space-y-3">
+                                        {(allUsersError || allUsersMessage) && (
+                                            <div
+                                                className={`rounded-md px-3 py-3 text-sm ring-1 ${
+                                                    allUsersError
+                                                        ? "bg-rose-50 text-rose-600 ring-rose-200"
+                                                        : "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                                                }`}
+                                            >
+                                                {allUsersError ?? allUsersMessage}
+                                            </div>
+                                        )}
+
+                                        {isLoadingAllUsers ? (
+                                            <div className="rounded-md bg-purple-50/70 px-3 py-3 text-sm text-purple-700 ring-1 ring-purple-200/60">
+                                                Gebruikers laden...
+                                            </div>
+                                        ) : allUsers.length === 0 ? (
+                                            <div className="rounded-md bg-zinc-50 px-3 py-3 text-sm text-zinc-600 ring-1 ring-zinc-200">
+                                                Er zijn nog geen geregistreerde gebruikers.
+                                            </div>
+                                        ) : (
+                                            allUsers.map((user) => {
+                                                const userKey = user.email ?? String(user.id);
+                                                const isBlocked = user.blocked_status;
+                                                const isProcessingBlock = processingBlockEmail === user.email;
+
+                                                return (
+                                                    <div
+                                                        key={userKey}
+                                                        role="button"
+                                                        tabIndex={0}
+                                                        onClick={() => setSelectedUser(user)}
+                                                        onKeyDown={(e) => e.key === "Enter" && setSelectedUser(user)}
+                                                        className={`flex cursor-pointer items-center justify-between gap-3 rounded-md px-4 py-3 ring-1 transition ${
+                                                            isBlocked
+                                                                ? "bg-rose-50/60 ring-rose-200/70 hover:bg-rose-50"
+                                                                : "bg-purple-50/70 ring-purple-200/60 hover:bg-purple-50"
+                                                        }`}
+                                                    >
+                                                        <div className="flex min-w-0 items-center gap-3">
+                                                            <div
+                                                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                                                                    isBlocked
+                                                                        ? "bg-rose-100 text-rose-700"
+                                                                        : "bg-purple-100 text-purple-700"
+                                                                }`}
+                                                            >
+                                                                {(user.username ?? user.email ?? "?")[0].toUpperCase()}
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <p className="truncate text-sm font-semibold text-zinc-900">
+                                                                    {user.username ?? "Geen gebruikersnaam"}
+                                                                </p>
+                                                                <p className="truncate text-xs text-zinc-500">{user.email ?? "Geen e-mail"}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex shrink-0 items-center gap-2">
+                                                            <span
+                                                                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${
+                                                                    isBlocked
+                                                                        ? "bg-rose-100 text-rose-700 ring-rose-200"
+                                                                        : user.status === "approved"
+                                                                            ? "bg-emerald-100 text-emerald-700 ring-emerald-200"
+                                                                            : user.status === "pending"
+                                                                                ? "bg-amber-100 text-amber-700 ring-amber-200"
+                                                                                : "bg-zinc-100 text-zinc-600 ring-zinc-200"
+                                                                }`}
+                                                            >
+                                                                {isBlocked
+                                                                    ? "Geblokkeerd"
+                                                                    : user.status === "approved"
+                                                                        ? "Goedgekeurd"
+                                                                        : user.status === "pending"
+                                                                            ? "Wachtend"
+                                                                            : "Geweigerd"}
+                                                            </span>
+
+                                                            {!isBlocked && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        if (user.email) void handleBlockUser(user.email);
+                                                                    }}
+                                                                    disabled={isProcessingBlock || !user.email}
+                                                                    className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-rose-500 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                    aria-label={`Blokkeer ${user.username ?? user.email ?? "gebruiker"}`}
+                                                                >
+                                                                    <svg
+                                                                        xmlns="http://www.w3.org/2000/svg"
+                                                                        viewBox="0 0 24 24"
+                                                                        fill="none"
+                                                                        stroke="currentColor"
+                                                                        strokeWidth="2.5"
+                                                                        className="h-3.5 w-3.5"
+                                                                        aria-hidden="true"
+                                                                    >
+                                                                        <path d="M18 6 6 18" />
+                                                                        <path d="m6 6 12 12" />
+                                                                    </svg>
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 );
