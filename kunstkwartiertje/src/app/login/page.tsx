@@ -2,11 +2,10 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "../../lib/supabaseClient";
+import { createClient } from "src/utils/supabase/client";
 
 const LoginPage = () => {
-  const router = useRouter();
+  const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,7 +15,7 @@ const LoginPage = () => {
     setLoading(true);
     setError("");
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -27,8 +26,51 @@ const LoginPage = () => {
       return;
     }
 
-    // Verwijs naar de hoofdpagina of een begeleider-dashboard route
-    router.push("/");
+    if (!data?.user?.id) {
+      setError('Login mislukt, probeer opnieuw.');
+      setLoading(false);
+      return;
+    }
+
+    // Get role from auth metadata - try from the login response first
+    let role = data.user?.user_metadata?.type;
+
+    if (!role) {
+      // If not available in login response, wait longer and fetch from session
+      console.log('Role not found in login response, fetching from session...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const { data: { user: sessionUser }, error: sessionError } = await supabase.auth.getUser();
+      if (sessionError || !sessionUser) {
+        console.error('Session error:', sessionError);
+        setError('Kon gebruikersgegevens niet ophalen.');
+        setLoading(false);
+        return;
+      }
+      role = sessionUser.user_metadata?.type;
+    }
+
+    role = role || 'begeleider'; // Default fallback
+
+    console.log('User authenticated:', data.user.id, 'Role:', role);
+    console.log('User metadata:', data.user.user_metadata);
+
+    let redirectPath = '/';
+    if (role === 'begeleider') redirectPath = '/profile/accompanist';
+    else if (role === 'ondernemer') redirectPath = '/profile/entrepreneur';
+    else if (role === 'kunstenaar') redirectPath = '/profile/artist';
+
+    console.log('Redirecting to:', redirectPath);
+
+    try {
+      // Try window.location.href first for more reliable navigation
+      console.log('Using window.location.href for navigation');
+      window.location.href = redirectPath;
+    } catch (navError) {
+      console.error('Navigation error:', navError);
+      setError('Fout bij doorsturen naar profielpagina.');
+      setLoading(false);
+    }
   };
 
   const handleOAuthLogin = async (provider: "google" | "apple") => {

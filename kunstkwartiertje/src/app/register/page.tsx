@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from 'src/utils/supabase/client';
 
@@ -17,6 +17,8 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [lastRegisterAttempt, setLastRegisterAttempt] = useState<number | null>(null);
   const [nextAllowedRegisterAt, setNextAllowedRegisterAt] = useState<number | null>(null);
+
+  const [isPending, startTransition] = useTransition();
 
   const handleRegister = async () => {
     if (loading) {
@@ -68,6 +70,12 @@ export default function RegisterPage() {
     const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          username,
+          type: role.toLowerCase(),
+        }
+      }
     });
 
     if (authError) {
@@ -86,27 +94,24 @@ export default function RegisterPage() {
       return;
     }
 
+    console.log('Registration successful. User data:', data?.user);
+    console.log('User metadata:', data?.user?.user_metadata);
+
     if (!data?.user?.id) {
       setError('Kan geen gebruiker aanmaken. Probeer later nogmaals.');
       setLoading(false);
       return;
     }
 
-    const { error: insertError } = await supabase.from('users').insert({
-      username,
-      email,
-      type: role.toLowerCase(),
-      blocked_status: false,
-      phone_number: null,
+    // Note: User role is already stored in auth metadata, so we don't need to insert into users table
+    // If you need additional user data (username, phone, etc.), you'll need to fix the users table schema
+    // to use UUID for the id column instead of bigint
+
+    console.log('User successfully registered with ID:', data.user.id, 'and role:', role.toLowerCase());
+
+    startTransition(() => {
+      router.push('/login');
     });
-
-    if (insertError) {
-      setError(`Fout bij opslaan van gebruikersgegevens: ${insertError.message}`);
-      setLoading(false);
-      return;
-    }
-
-    router.push('/login');
     setLoading(false);
   };
 
@@ -189,10 +194,10 @@ export default function RegisterPage() {
         <button
           type="button"
           onClick={handleRegister}
-          disabled={loading}
+          disabled={loading || isPending}
           className="w-full mt-6 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-900"
         >
-          {loading ? 'Laden...' : 'Registreren'}
+          {loading || isPending ? 'Laden...' : 'Registreren'}
         </button>
 
         <div className="flex items-center my-6">

@@ -25,7 +25,7 @@ export default function Hero() {
         </p>
 
         <a
-          href="/begeleider-login"
+          href="/register"
           className="mt-8 md:mt-10 inline-block w-full md:w-auto px-6 md:px-10 py-3 md:py-4 bg-black text-white rounded-xl text-sm md:text-lg hover:opacity-90 transition text-center"
         >
           Start hier
