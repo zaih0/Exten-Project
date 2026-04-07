@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "src/utils/supabase/admin";
+import { ensureRoleProfileRow } from "src/utils/profileRoleTable";
 
 type RequestBody = {
   email?: string | null;
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
     const supabase = createAdminClient();
     const { data: existingUser, error: lookupError } = await supabase
       .from("users")
-      .select("email, blocked_status")
+      .select("id, email, blocked_status, type")
       .eq("email", payload.email)
       .maybeSingle();
 
@@ -46,18 +47,38 @@ export async function POST(request: Request) {
       );
     }
 
-    const { error } = existingUser
+    const { data: writeData, error } = existingUser
       ? await supabase
           .from("users")
-        .update(requestPayload)
+          .update(requestPayload)
+        .select("id, type")
           .eq("email", payload.email)
+          .single()
       : await supabase
           .from("users")
-          .insert({ ...requestPayload, status: "pending", blocked_status: false });
+          .insert({ ...requestPayload, status: "pending", blocked_status: false })
+        .select("id, type")
+          .single();
 
     if (error) {
       console.error("Approval request upsert error", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    const userId = Number(writeData?.id ?? existingUser?.id);
+    const userRole = writeData?.type ?? existingUser?.type ?? null;
+
+    if (Number.isFinite(userId) && userRole) {
+      const roleSyncResult = await ensureRoleProfileRow({
+        supabase,
+        role: userRole,
+        userId,
+        username: payload.username ?? null,
+      });
+
+      if (roleSyncResult.error) {
+        console.error("Role profile sync error", roleSyncResult.error);
+      }
     }
 
     return NextResponse.json({ ok: true });
