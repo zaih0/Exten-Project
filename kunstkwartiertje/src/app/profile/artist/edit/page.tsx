@@ -10,6 +10,7 @@ type Artwork = {
     imageUrl: string;
     description: string;
     status?: "pending" | "approved" | "denied";
+    denialReason?: string | null;
 };
 
 export default function ArtistEditPage() {
@@ -155,7 +156,14 @@ export default function ArtistEditPage() {
             try {
                 return JSON.parse(responseText) as {
                     error?: string;
-                    artwork?: { id: number; title: string; imageUrl: string; description: string; status?: "pending" | "approved" | "denied" };
+                    artwork?: {
+                        id: number;
+                        title: string;
+                        imageUrl: string;
+                        description: string;
+                        status?: "pending" | "approved" | "denied";
+                        denialReason?: string | null;
+                    };
                 };
             } catch {
                 return null;
@@ -177,6 +185,7 @@ export default function ArtistEditPage() {
                     imageUrl: result.artwork!.imageUrl,
                     description: result.artwork!.description ?? "",
                     status: result.artwork!.status ?? "pending",
+                    denialReason: result.artwork!.denialReason ?? null,
                 },
             ]);
         }
@@ -322,6 +331,12 @@ export default function ArtistEditPage() {
                                                             : "Wacht op goedkeuring"}
                                                 </span>
                                             </div>
+
+                                            {artwork.status === "denied" && artwork.denialReason && (
+                                                <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                                                    Afwijsreden: {artwork.denialReason}
+                                                </div>
+                                            )}
 
                                             <input
                                                 type="text"

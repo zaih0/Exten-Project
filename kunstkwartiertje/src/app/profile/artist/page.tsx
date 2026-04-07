@@ -296,6 +296,12 @@ export default function ArtistProfile() {
                                 Wijzig Profiel
                             </button>
                             <Link
+                                href="/profile/pickups"
+                                className="px-6 py-2 bg-amber-100 text-amber-800 font-medium rounded-full hover:bg-amber-200 transition"
+                            >
+                                Pickup systeem
+                            </Link>
+                            <Link
                                 href="/profile/artist/edit"
                                 className="px-6 py-2 bg-violet-600 text-white font-medium rounded-full hover:bg-violet-700 transition"
                             >

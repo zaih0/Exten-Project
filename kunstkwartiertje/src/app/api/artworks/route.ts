@@ -14,7 +14,7 @@ export async function GET(request: Request) {
         if (!email) {
             const { data, error } = await supabase
                 .from("artworks")
-                .select("id, title, description, images, status, created_at")
+                .select("id, user_id, title, description, images, status, created_at, denial_reason")
                 .eq("status", "approved")
                 .order("created_at", { ascending: false });
 
@@ -22,14 +22,78 @@ export async function GET(request: Request) {
                 return NextResponse.json({ error: error.message }, { status: 500 });
             }
 
-            const artworks = (data ?? []).map((item) => ({
+            const rows = data ?? [];
+            const artIds = rows.map((item) => Number(item.id)).filter((value) => Number.isFinite(value));
+            const userIds = Array.from(
+                new Set(rows.map((item) => String(item.user_id)).filter((value) => value.length > 0)),
+            );
+
+            const usersById = new Map<string, { username: string | null; email: string | null }>();
+
+            if (userIds.length > 0) {
+                const { data: users, error: usersError } = await supabase
+                    .from("users")
+                    .select("id, username, email")
+                    .in("id", userIds);
+
+                if (usersError) {
+                    return NextResponse.json({ error: usersError.message }, { status: 500 });
+                }
+
+                for (const user of users ?? []) {
+                    usersById.set(String(user.id), {
+                        username: user.username ?? null,
+                        email: user.email ?? null,
+                    });
+                }
+            }
+
+            const reservationByArtId = new Map<
+                number,
+                {
+                    pickup_status?: string | null;
+                    current_location_name?: string | null;
+                    current_location_address?: string | null;
+                }
+            >();
+
+            if (artIds.length > 0) {
+                const { data: reservations, error: reservationsError } = await supabase
+                    .from("reserved_artworks")
+                    .select("art_id, pickup_status, current_location_name, current_location_address")
+                    .in("art_id", artIds);
+
+                if (reservationsError && reservationsError.code !== "42703") {
+                    return NextResponse.json({ error: reservationsError.message }, { status: 500 });
+                }
+
+                for (const reservation of reservations ?? []) {
+                    reservationByArtId.set(Number(reservation.art_id), {
+                        pickup_status: reservation.pickup_status ?? null,
+                        current_location_name: reservation.current_location_name ?? null,
+                        current_location_address: reservation.current_location_address ?? null,
+                    });
+                }
+            }
+
+            const artworks = rows.map((item) => {
+                const owner = usersById.get(String(item.user_id));
+                const reservationState = reservationByArtId.get(Number(item.id));
+
+                return {
                 id: item.id,
                 title: item.title,
                 description: item.description,
                 imageUrl: Array.isArray(item.images) ? (item.images[0] ?? "") : (item.images ?? ""),
                 status: (item.status ?? "approved") as ArtworkStatus,
                 created_at: item.created_at ?? null,
-            }));
+                denialReason: item.denial_reason ?? null,
+                artistName: owner?.username ?? owner?.email ?? "Onbekende artiest",
+                pickupStatus: reservationState?.pickup_status ?? null,
+                locationName: reservationState?.current_location_name ?? null,
+                locationAddress: reservationState?.current_location_address ?? null,
+            };
+            });
 
             return NextResponse.json({ artworks });
         }
@@ -50,7 +114,7 @@ export async function GET(request: Request) {
 
         let query = supabase
             .from("artworks")
-            .select("id, title, description, images, status, created_at")
+            .select("id, title, description, images, status, created_at, denial_reason")
             .eq("user_id", artistUser.id);
 
         if (!includeAll) {
@@ -70,6 +134,7 @@ export async function GET(request: Request) {
             imageUrl: Array.isArray(item.images) ? (item.images[0] ?? "") : (item.images ?? ""),
             status: (item.status ?? "approved") as ArtworkStatus,
             created_at: item.created_at ?? null,
+            denialReason: item.denial_reason ?? null,
         }));
 
         return NextResponse.json({ artworks });
@@ -147,6 +212,7 @@ export async function POST(request: Request) {
                 images: imageUrl,
                 user_id: artistUser.id,
                 status: "pending",
+                denial_reason: null,
             })
             .select()
             .single();

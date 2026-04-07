@@ -49,6 +49,16 @@ export default function ProfileNavbar() {
     router.push(profilePath);
   };
 
+  const handleViewReservations = () => {
+    setMenuOpen(false);
+    router.push("/profile/reservations");
+  };
+
+  const handleViewPickups = () => {
+    setMenuOpen(false);
+    router.push("/profile/pickups");
+  };
+
   const handleLogout = async () => {
     setMenuOpen(false);
     try {
@@ -111,6 +121,22 @@ export default function ProfileNavbar() {
                 className="w-full rounded-lg px-3 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100"
               >
                 Bekijk profiel
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={handleViewReservations}
+                className="w-full rounded-lg px-3 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100"
+              >
+                Mijn reserveringen
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={handleViewPickups}
+                className="w-full rounded-lg px-3 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100"
+              >
+                Pickup systeem
               </button>
               <button
                 type="button"

@@ -27,6 +27,11 @@ type ArtworkRequest = {
     artist_type: string | null;
 };
 
+type DenyArtworkTarget = {
+    id: number;
+    title: string;
+};
+
 type BlockedUser = {
     id: string | number;
     email: string | null;
@@ -125,6 +130,8 @@ export default function AdminPage() {
     const [allUsersMessage, setAllUsersMessage] = useState<string | null>(null);
     const [processingArtworkId, setProcessingArtworkId] = useState<number | null>(null);
     const [selectedArtwork, setSelectedArtwork] = useState<ArtworkRequest | null>(null);
+    const [denyArtworkTarget, setDenyArtworkTarget] = useState<DenyArtworkTarget | null>(null);
+    const [denyArtworkReason, setDenyArtworkReason] = useState("");
     const notificationRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -368,7 +375,15 @@ export default function AdminPage() {
     const handleArtworkDecision = async (
         artworkId: number,
         nextStatus: Exclude<RequestStatus, "pending">,
+        denialReasonInput?: string,
     ) => {
+        const denialReason = denialReasonInput?.trim();
+
+        if (nextStatus === "denied" && !denialReason) {
+            setArtworkError("Een reden is verplicht bij afwijzen.");
+            return;
+        }
+
         setProcessingArtworkId(artworkId);
         setArtworkError(null);
         setArtworkMessage(null);
@@ -378,7 +393,7 @@ export default function AdminPage() {
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ requestType: "artwork", artworkId, status: nextStatus }),
+            body: JSON.stringify({ requestType: "artwork", artworkId, status: nextStatus, denialReason }),
         });
 
         const responseText = await response.text();
@@ -399,8 +414,29 @@ export default function AdminPage() {
 
         setPendingArtworkRequests((current) => current.filter((request) => request.id !== artworkId));
         setSelectedArtwork((current) => (current?.id === artworkId ? null : current));
+        if (nextStatus === "denied") {
+            setDenyArtworkTarget(null);
+            setDenyArtworkReason("");
+        }
         setArtworkMessage(nextStatus === "approved" ? "Kunstwerk goedgekeurd." : "Kunstwerk afgewezen.");
         setProcessingArtworkId(null);
+    };
+
+    const openDenyArtworkModal = (artworkId: number, title: string) => {
+        setArtworkError(null);
+        setDenyArtworkReason("");
+        setDenyArtworkTarget({ id: artworkId, title });
+    };
+
+    const closeDenyArtworkModal = () => {
+        if (denyArtworkTarget && processingArtworkId === denyArtworkTarget.id) return;
+        setDenyArtworkTarget(null);
+        setDenyArtworkReason("");
+    };
+
+    const submitDenyArtwork = async () => {
+        if (!denyArtworkTarget) return;
+        await handleArtworkDecision(denyArtworkTarget.id, "denied", denyArtworkReason);
     };
 
     const handleBlockUser = async (email: string) => {
@@ -654,7 +690,7 @@ export default function AdminPage() {
                                                 <div className="mt-4 flex items-center justify-end gap-2">
                                                     <button
                                                         type="button"
-                                                        onClick={() => void handleArtworkDecision(artwork.id, "denied")}
+                                                        onClick={() => openDenyArtworkModal(artwork.id, artwork.title)}
                                                         disabled={isProcessing}
                                                         className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-rose-500 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                                                         aria-label={`Weiger ${artwork.title}`}
@@ -763,7 +799,7 @@ export default function AdminPage() {
                         <div className="mt-5 flex justify-end gap-2">
                             <button
                                 type="button"
-                                onClick={() => void handleArtworkDecision(selectedArtwork.id, "denied")}
+                                onClick={() => openDenyArtworkModal(selectedArtwork.id, selectedArtwork.title)}
                                 disabled={processingArtworkId === selectedArtwork.id}
                                 className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-600 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                             >
@@ -776,6 +812,74 @@ export default function AdminPage() {
                                 className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 Accepteer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {denyArtworkTarget && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm"
+                    onClick={(event) => {
+                        if (event.target === event.currentTarget) closeDenyArtworkModal();
+                    }}
+                >
+                    <div className="w-full max-w-lg rounded-3xl border border-rose-200/70 bg-white p-6 shadow-2xl shadow-rose-500/20">
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <p className="text-base font-semibold text-zinc-900">Kunstwerk afwijzen</p>
+                                <p className="mt-1 text-xs text-zinc-500">{denyArtworkTarget.title}</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={closeDenyArtworkModal}
+                                disabled={processingArtworkId === denyArtworkTarget.id}
+                                className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 transition hover:bg-zinc-200 disabled:opacity-60"
+                                aria-label="Sluiten"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    className="h-4 w-4"
+                                    aria-hidden="true"
+                                >
+                                    <path d="M18 6 6 18" />
+                                    <path d="m6 6 12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <label className="mt-4 block">
+                            <span className="text-xs font-semibold text-zinc-700">Reden voor afwijzing</span>
+                            <textarea
+                                value={denyArtworkReason}
+                                onChange={(event) => setDenyArtworkReason(event.target.value)}
+                                rows={4}
+                                placeholder="Geef duidelijk aan waarom dit kunstwerk niet is goedgekeurd."
+                                className="mt-1 w-full rounded-xl border border-rose-200 px-3 py-2 text-sm text-zinc-800 outline-none ring-rose-300 focus:ring"
+                            />
+                        </label>
+
+                        <div className="mt-5 flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={closeDenyArtworkModal}
+                                disabled={processingArtworkId === denyArtworkTarget.id}
+                                className="rounded-full bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-200 disabled:opacity-60"
+                            >
+                                Annuleren
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => void submitDenyArtwork()}
+                                disabled={processingArtworkId === denyArtworkTarget.id || !denyArtworkReason.trim()}
+                                className="rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {processingArtworkId === denyArtworkTarget.id ? "Verwerken..." : "Afwijzen en versturen"}
                             </button>
                         </div>
                     </div>
@@ -1073,7 +1177,7 @@ export default function AdminPage() {
                                                                 </button>
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => void handleArtworkDecision(artwork.id, "denied")}
+                                                                    onClick={() => openDenyArtworkModal(artwork.id, artwork.title)}
                                                                     disabled={isProcessingArtwork}
                                                                     className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-rose-500 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                                                                 >

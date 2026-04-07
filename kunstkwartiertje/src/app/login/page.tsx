@@ -230,6 +230,16 @@ const LoginPage = () => {
           {loading ? "Loading..." : "Ga verder"}
         </button>
 
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href = "/register";
+          }}
+          className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-900 bg-white hover:bg-gray-100 mt-3"
+        >
+          Naar registreren
+        </button>
+
         <div className="flex items-center my-4">
           <div className="flex-grow border-t border-gray-300" />
           <span className="px-2 text-gray-500 text-sm">of</span>

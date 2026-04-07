@@ -6,6 +6,7 @@ type UpdateBody = {
   email?: string;
   artworkId?: number;
   status?: "approved" | "denied";
+  denialReason?: string;
 };
 
 export async function GET(request: Request) {
@@ -110,9 +111,20 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: "Missing artworkId or status." }, { status: 400 });
       }
 
+      const denialReason = payload.denialReason?.trim();
+
+      if (payload.status === "denied" && !denialReason) {
+        return NextResponse.json({ error: "Missing denial reason for denied artwork." }, { status: 400 });
+      }
+
+      const artworkUpdatePayload =
+        payload.status === "denied"
+          ? { status: "denied", denial_reason: denialReason }
+          : { status: "approved", denial_reason: null };
+
       const { error } = await supabase
         .from("artworks")
-        .update({ status: payload.status })
+        .update(artworkUpdatePayload)
         .eq("id", payload.artworkId)
         .eq("status", "pending");
 

@@ -249,6 +249,14 @@ export default function RegisterPage() {
           {loading ? 'Laden...' : 'Registreren'}
         </button>
 
+        <button
+          type="button"
+          onClick={() => safeNavigate('/login')}
+          className="w-full mt-3 py-3 bg-white text-gray-900 rounded-lg font-medium border border-gray-300 hover:bg-gray-100"
+        >
+          Naar login
+        </button>
+
         <div className="flex items-center my-6">
           <div className="flex-grow border-t border-gray-300"></div>
           <span className="px-3 text-gray-500 text-sm">of</span>

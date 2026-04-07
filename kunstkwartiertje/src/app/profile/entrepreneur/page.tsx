@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import useCurrentUserProfile from "src/app/components/profile/useCurrentUserProfile";
 import { createClient } from "src/utils/supabase/client";
@@ -192,9 +193,14 @@ export default function EntrepreneurProfile() {
 						<img src={profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileUsername || username)}`} alt="Profielfoto" className="h-16 w-16 rounded-full object-cover ring-1 ring-zinc-200" />
 						<h1 className="text-2xl font-bold">{profileUsername || username}</h1>
 					</div>
-					<button type="button" onClick={openEdit} className="rounded-full bg-zinc-100 px-4 py-2 text-sm font-semibold hover:bg-zinc-200">
-						Profiel bewerken
-					</button>
+					<div className="flex items-center gap-2">
+						<Link href="/profile/pickups" className="rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-200">
+							Pickup systeem
+						</Link>
+						<button type="button" onClick={openEdit} className="rounded-full bg-zinc-100 px-4 py-2 text-sm font-semibold hover:bg-zinc-200">
+							Profiel bewerken
+						</button>
+					</div>
 				</div>
 				<p className="mt-4 text-zinc-600">{aboutMe || "Over mij..."}</p>
 			</div>
