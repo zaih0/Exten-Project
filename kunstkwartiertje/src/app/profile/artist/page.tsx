@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import useFollowSummary from "src/app/components/profile/useFollowSummary";
 import useCurrentUserProfile from "src/app/components/profile/useCurrentUserProfile";
 import { createClient } from "src/utils/supabase/client";
 
@@ -10,6 +11,7 @@ type Artwork = {
     title: string;
     description: string;
     imageUrl: string;
+    price?: number | null;
 };
 
 type ArtistFeedback = {
@@ -41,6 +43,8 @@ export default function ArtistProfile() {
     const [feedbackItems, setFeedbackItems] = useState<ArtistFeedback[]>([]);
     const [isLoadingFeedback, setIsLoadingFeedback] = useState(true);
     const [feedbackError, setFeedbackError] = useState<string | null>(null);
+    const [currentEmail, setCurrentEmail] = useState<string | undefined>(undefined);
+    const { followerCount, followingCount } = useFollowSummary({ targetEmail: currentEmail });
 
     const openEdit = () => {
         setEditUsername(profileUsername || username);
@@ -76,6 +80,10 @@ export default function ArtistProfile() {
             const {
                 data: { user },
             } = await supabase.auth.getUser();
+
+            if (user?.email && isMounted) {
+                setCurrentEmail(user.email);
+            }
 
             if (!user?.email || !isMounted) return;
 
@@ -357,7 +365,14 @@ export default function ArtistProfile() {
                         
                         <div className="grow text-center md:text-left">
                             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{profileUsername || username}</h1>
-                            <br />
+                            <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-sm text-gray-600 md:justify-start">
+                                <span className="rounded-full bg-gray-100 px-3 py-1 font-medium text-gray-700">
+                                    {followerCount} volgers
+                                </span>
+                                <span className="rounded-full bg-gray-100 px-3 py-1 font-medium text-gray-700">
+                                    {followingCount} gevolgd
+                                </span>
+                            </div>
                         </div>
                         
                         <div className="flex gap-3 mt-4 md:mt-0">
@@ -368,6 +383,12 @@ export default function ArtistProfile() {
                             >
                                 Wijzig Profiel
                             </button>
+                            <Link
+                                href="/chat"
+                                className="px-6 py-2 bg-black text-white font-medium rounded-full hover:bg-gray-900 transition"
+                            >
+                                Chat hub
+                            </Link>
                             <Link
                                 href="/profile/pickups"
                                 className="px-6 py-2 bg-amber-100 text-amber-800 font-medium rounded-full hover:bg-amber-200 transition"
@@ -463,6 +484,9 @@ export default function ArtistProfile() {
                                 </div>
                                 <div className="p-4">
                                     <p className="text-sm text-gray-500 line-clamp-2">{artwork.description || "Geen beschrijving"}</p>
+                                    {typeof artwork.price === "number" && (
+                                        <p className="mt-2 text-sm font-semibold text-gray-700">€ {artwork.price.toFixed(2)}</p>
+                                    )}
                                 </div>
                             </div>
                         ))}

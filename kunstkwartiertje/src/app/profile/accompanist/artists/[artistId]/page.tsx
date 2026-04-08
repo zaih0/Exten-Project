@@ -30,6 +30,16 @@ type ArtistFeedback = {
     authorName: string;
 };
 
+type ArtistChatMessage = {
+    id: number;
+    receiverId: number;
+    receiverName: string;
+    message: string;
+    imageUrl: string | null;
+    sentDate: string | null;
+    readDate: string | null;
+};
+
 export default function AccompanistArtistProfilePage() {
     const params = useParams<{ artistId: string }>();
     const [accompanistEmail, setAccompanistEmail] = useState<string | null>(null);
@@ -48,6 +58,10 @@ export default function AccompanistArtistProfilePage() {
     const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
+    const [chatMessages, setChatMessages] = useState<ArtistChatMessage[]>([]);
+    const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
+    const [editMessageDraft, setEditMessageDraft] = useState("");
+    const [isSavingMessage, setIsSavingMessage] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -79,8 +93,8 @@ export default function AccompanistArtistProfilePage() {
                 { method: "GET", cache: "no-store" },
             );
 
-            const responseText = await response.text();
-            const feedbackText = await feedbackResponse.text();
+            const [responseText, feedbackText] = await Promise.all([response.text(), feedbackResponse.text()]);
+
             const result = (() => {
                 try {
                     return JSON.parse(responseText) as {

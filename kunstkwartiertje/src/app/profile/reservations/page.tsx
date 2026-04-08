@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import FollowButton from "src/app/components/profile/FollowButton";
 import { createClient } from "src/utils/supabase/client";
 
 type ReservedArtwork = {
@@ -9,6 +10,7 @@ type ReservedArtwork = {
     title: string;
     description: string;
     imageUrl: string;
+    artistUserId?: number;
     artistName?: string;
     pickupStatus?: "reserved" | "picked_up" | null;
     locationName?: string | null;
@@ -124,6 +126,9 @@ export default function ReservedArtworksPage() {
                                     <p className="mt-1 text-xs font-medium text-zinc-500">
                                         {artwork.artistName || "Onbekende artiest"}
                                     </p>
+                                    <div className="mt-2">
+                                        <FollowButton targetUserId={artwork.artistUserId} />
+                                    </div>
                                     <p className="mt-2 line-clamp-3 text-sm text-zinc-600">
                                         {artwork.description || "Geen beschrijving"}
                                     </p>

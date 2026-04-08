@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import FollowButton from "src/app/components/profile/FollowButton";
 import { createClient } from "src/utils/supabase/client";
 
 type Artwork = {
@@ -9,10 +10,21 @@ type Artwork = {
     title: string;
     description: string;
     imageUrl: string;
+    price?: number | null;
+    artistUserId?: number;
+    artistProfilePic?: string | null;
     artistName?: string;
     pickupStatus?: string | null;
     locationName?: string | null;
     locationAddress?: string | null;
+};
+
+type ArtistGroup = {
+    artistKey: string;
+    artistName: string;
+    artistUserId?: number;
+    artistProfilePic?: string | null;
+    artworks: Artwork[];
 };
 
 export default function Home() {
@@ -26,14 +38,25 @@ export default function Home() {
     const [reservedArtworkIds, setReservedArtworkIds] = useState<number[]>([]);
 
     const artworksByArtist = useMemo(() => {
-        return artworks.reduce<Record<string, Artwork[]>>((groups, artwork) => {
+        return artworks.reduce<ArtistGroup[]>((groups, artwork) => {
             const artistName = artwork.artistName?.trim() || "Onbekende artiest";
-            if (!groups[artistName]) {
-                groups[artistName] = [];
+            const artistKey = artwork.artistUserId ? `artist-${artwork.artistUserId}` : `name-${artistName}`;
+            const existingGroup = groups.find((group) => group.artistKey === artistKey);
+
+            if (existingGroup) {
+                existingGroup.artworks.push(artwork);
+                return groups;
             }
-            groups[artistName].push(artwork);
+
+            groups.push({
+                artistKey,
+                artistName,
+                artistUserId: artwork.artistUserId,
+                artistProfilePic: artwork.artistProfilePic ?? null,
+                artworks: [artwork],
+            });
             return groups;
-        }, {});
+        }, []);
     }, [artworks]);
 
     useEffect(() => {
@@ -178,14 +201,34 @@ export default function Home() {
                     </div>
                 ) : (
                     <div className="w-full space-y-8">
-                        {Object.entries(artworksByArtist).map(([artistName, artistArtworks]) => (
+                        {artworksByArtist.map((artistGroup) => (
                             <section
-                                key={artistName}
+                                key={artistGroup.artistKey}
                                 className="rounded-2xl border border-stone-300 bg-gradient-to-b from-stone-50 to-stone-100 px-4 py-5 shadow-inner sm:px-5"
                             >
-                                <h2 className="mb-4 text-lg font-bold tracking-wide text-stone-900">{artistName}</h2>
+                                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Link
+                                            href={artistGroup.artistUserId ? `/profile/${artistGroup.artistUserId}` : "/art_gallery"}
+                                            className="flex items-center gap-3 rounded-full border border-stone-300 bg-white px-3 py-2 shadow-sm transition hover:-translate-y-0.5 hover:bg-stone-50"
+                                        >
+                                            <img
+                                                src={artistGroup.artistProfilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(artistGroup.artistName)}`}
+                                                alt={artistGroup.artistName}
+                                                className="h-11 w-11 rounded-full object-cover ring-1 ring-stone-200"
+                                            />
+                                            <div>
+                                                <p className="text-xs uppercase tracking-[0.2em] text-stone-500">Profiel</p>
+                                                <h2 className="text-base font-bold tracking-wide text-stone-900">
+                                                    {artistGroup.artistName}
+                                                </h2>
+                                            </div>
+                                        </Link>
+                                        <FollowButton targetUserId={artistGroup.artistUserId} />
+                                    </div>
+                                </div>
                                 <div className="flex gap-5 overflow-x-auto pb-3">
-                                    {artistArtworks.map((artwork) => (
+                                    {artistGroup.artworks.map((artwork) => (
                                         <button
                                             key={artwork.id}
                                             type="button"
@@ -208,6 +251,11 @@ export default function Home() {
                                                 <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-stone-700">
                                                     {artwork.description || "Geen beschrijving"}
                                                 </p>
+                                                {typeof artwork.price === "number" && (
+                                                    <p className="mt-2 text-xs font-semibold text-stone-800">
+                                                        € {artwork.price.toFixed(2)}
+                                                    </p>
+                                                )}
                                             </div>
                                         </button>
                                     ))}
@@ -245,12 +293,28 @@ export default function Home() {
                                 <div>
                                     <p className="text-xs uppercase tracking-[0.25em] text-stone-500">Kunstwerk</p>
                                     <h3 className="mt-2 text-2xl font-semibold text-stone-900">{selectedArtwork.title}</h3>
-                                    <p className="mt-2 text-sm font-medium text-stone-600">
-                                        {selectedArtwork.artistName || "Onbekende artiest"}
-                                    </p>
+                                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                                        <Link
+                                            href={selectedArtwork.artistUserId ? `/profile/${selectedArtwork.artistUserId}` : "/art_gallery"}
+                                            className="inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100"
+                                        >
+                                            <img
+                                                src={selectedArtwork.artistProfilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedArtwork.artistName || "Onbekende artiest")}`}
+                                                alt={selectedArtwork.artistName || "Onbekende artiest"}
+                                                className="h-8 w-8 rounded-full object-cover ring-1 ring-stone-200"
+                                            />
+                                            <span>{selectedArtwork.artistName || "Onbekende artiest"}</span>
+                                        </Link>
+                                        <FollowButton targetUserId={selectedArtwork.artistUserId} />
+                                    </div>
                                     <p className="mt-4 text-sm leading-relaxed text-stone-700">
                                         {selectedArtwork.description || "Geen beschrijving"}
                                     </p>
+                                    {typeof selectedArtwork.price === "number" && (
+                                        <p className="mt-3 text-base font-semibold text-stone-900">
+                                            Prijs: € {selectedArtwork.price.toFixed(2)}
+                                        </p>
+                                    )}
 
                                     {(selectedArtwork.locationName || selectedArtwork.locationAddress) && (
                                         <div className="mt-4 rounded-lg border border-stone-300 bg-stone-50 p-3 text-sm text-stone-700">

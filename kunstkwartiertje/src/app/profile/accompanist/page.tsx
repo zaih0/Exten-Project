@@ -637,6 +637,9 @@ export default function AccompanistProfile() {
                             <a href="#artists-rights" className="px-6 py-2 bg-purple-600 text-white font-medium rounded-full hover:bg-purple-700 transition">
                                 Account Aanmaken
                             </a>
+                            <Link href="/chat" className="px-6 py-2 bg-amber-100 text-amber-800 font-medium rounded-full hover:bg-amber-200 transition">
+                                Chat hub
+                            </Link>
                             <button type="button" onClick={openEditProfile} className="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded-full hover:bg-gray-200 transition">
                                 Edit Profile
                             </button>

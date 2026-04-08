@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdminSession } from "src/utils/adminAuth";
 import { createAdminClient } from "src/utils/supabase/admin";
 
 type UpdateBody = {
@@ -14,6 +15,11 @@ export async function GET(request: Request) {
   const requestType = url.searchParams.get("type");
 
   try {
+    const auth = await requireAdminSession();
+    if ("error" in auth) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
     const supabase = createAdminClient();
 
     if (requestType === "artworks") {
@@ -104,6 +110,11 @@ export async function PATCH(request: Request) {
   }
 
   try {
+    const auth = await requireAdminSession();
+    if ("error" in auth) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
     const supabase = createAdminClient();
 
     if (payload.requestType === "artwork") {

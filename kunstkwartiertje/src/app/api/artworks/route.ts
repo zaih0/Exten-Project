@@ -3,6 +3,17 @@ import { createAdminClient } from "src/utils/supabase/admin";
 
 type ArtworkStatus = "pending" | "approved" | "denied";
 
+const parseOptionalPrice = (raw: FormDataEntryValue | string | null | undefined) => {
+    if (typeof raw !== "string") return null;
+    const trimmed = raw.trim().replace(",", ".");
+    if (!trimmed) return null;
+
+    const value = Number(trimmed);
+    if (!Number.isFinite(value) || value < 0) return null;
+
+    return Math.round(value * 100) / 100;
+};
+
 const checkManagedArtistPermission = async (params: {
     supabase: any;
     artistUserId: number;
@@ -45,7 +56,7 @@ export async function GET(request: Request) {
         if (!email) {
             const { data, error } = await supabase
                 .from("artworks")
-                .select("id, user_id, title, description, images, status, created_at, denial_reason")
+                .select("id, user_id, title, description, images, status, created_at, denial_reason, price")
                 .eq("status", "approved")
                 .order("created_at", { ascending: false });
 
@@ -60,6 +71,7 @@ export async function GET(request: Request) {
             );
 
             const usersById = new Map<string, { username: string | null; email: string | null }>();
+            const artistProfilesById = new Map<string, { profilePic: string | null }>();
 
             if (userIds.length > 0) {
                 const { data: users, error: usersError } = await supabase
@@ -76,6 +88,19 @@ export async function GET(request: Request) {
                         username: user.username ?? null,
                         email: user.email ?? null,
                     });
+                }
+
+                const { data: artistProfiles, error: artistProfilesError } = await supabase
+                    .from("artist")
+                    .select("user_id, profile_pic")
+                    .in("user_id", userIds);
+
+                if (!artistProfilesError) {
+                    for (const profile of artistProfiles ?? []) {
+                        artistProfilesById.set(String(profile.user_id), {
+                            profilePic: profile.profile_pic ?? null,
+                        });
+                    }
                 }
             }
 
@@ -109,13 +134,17 @@ export async function GET(request: Request) {
 
             const artworks = rows.map((item) => {
                 const owner = usersById.get(String(item.user_id));
+                const ownerProfile = artistProfilesById.get(String(item.user_id));
                 const reservationState = reservationByArtId.get(Number(item.id));
 
                 return {
                 id: item.id,
+                artistUserId: Number(item.user_id),
+                artistProfilePic: ownerProfile?.profilePic ?? null,
                 title: item.title,
                 description: item.description,
                 imageUrl: Array.isArray(item.images) ? (item.images[0] ?? "") : (item.images ?? ""),
+                price: typeof item.price === "number" ? item.price : null,
                 status: (item.status ?? "approved") as ArtworkStatus,
                 created_at: item.created_at ?? null,
                 denialReason: item.denial_reason ?? null,
@@ -145,7 +174,7 @@ export async function GET(request: Request) {
 
         let query = supabase
             .from("artworks")
-            .select("id, title, description, images, status, created_at, denial_reason")
+            .select("id, title, description, images, status, created_at, denial_reason, price")
             .eq("user_id", artistUser.id);
 
         if (!includeAll) {
@@ -163,6 +192,7 @@ export async function GET(request: Request) {
             title: item.title,
             description: item.description,
             imageUrl: Array.isArray(item.images) ? (item.images[0] ?? "") : (item.images ?? ""),
+            price: typeof item.price === "number" ? item.price : null,
             status: (item.status ?? "approved") as ArtworkStatus,
             created_at: item.created_at ?? null,
             denialReason: item.denial_reason ?? null,
@@ -187,6 +217,7 @@ export async function POST(request: Request) {
     const file = formData.get("file") as File | null;
     const title = (formData.get("title") as string | null)?.trim();
     const description = ((formData.get("description") as string | null) ?? "").trim();
+    const price = parseOptionalPrice(formData.get("price"));
     const authUserId = (formData.get("userId") as string | null)?.trim();
     const email = (formData.get("email") as string | null)?.trim();
 
@@ -252,6 +283,7 @@ export async function POST(request: Request) {
                 description,
                 images: imageUrl,
                 user_id: artistUser.id,
+                price,
                 status: "pending",
                 denial_reason: null,
             })
@@ -274,6 +306,7 @@ export async function POST(request: Request) {
                 title: data.title,
                 description: data.description,
                 imageUrl: artworkImage,
+                price: typeof data.price === "number" ? data.price : null,
                 status: (data.status ?? "pending") as ArtworkStatus,
             },
         });
@@ -287,6 +320,110 @@ type DeleteBody = {
     artworkId?: number;
     email?: string;
 };
+
+type UpdateBody = {
+    artworkId?: number;
+    email?: string;
+    title?: string;
+    description?: string;
+    imageUrl?: string;
+    price?: number | null;
+};
+
+export async function PATCH(request: Request) {
+    let payload: UpdateBody;
+
+    try {
+        payload = (await request.json()) as UpdateBody;
+    } catch {
+        return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+    }
+
+    if (!payload.artworkId || !payload.email) {
+        return NextResponse.json({ error: "Missing artworkId or email." }, { status: 400 });
+    }
+
+    const nextTitle = (payload.title ?? "").trim();
+    const nextDescription = typeof payload.description === "string" ? payload.description.trim() : undefined;
+    const nextImageUrl = typeof payload.imageUrl === "string" ? payload.imageUrl.trim() : undefined;
+    const nextPrice =
+        payload.price === null
+            ? null
+            : typeof payload.price === "number" && Number.isFinite(payload.price) && payload.price >= 0
+                ? Math.round(payload.price * 100) / 100
+                : undefined;
+
+    if (!nextTitle) {
+        return NextResponse.json({ error: "Titel is verplicht." }, { status: 400 });
+    }
+
+    try {
+        const supabase = createAdminClient();
+
+        const { data: artistUser, error: artistLookupError } = await supabase
+            .from("users")
+            .select("id")
+            .eq("email", payload.email)
+            .maybeSingle();
+
+        if (artistLookupError) {
+            return NextResponse.json({ error: artistLookupError.message }, { status: 500 });
+        }
+
+        if (!artistUser?.id) {
+            return NextResponse.json({ error: "Kunstenaar niet gevonden." }, { status: 404 });
+        }
+
+        const editPermission = await checkManagedArtistPermission({
+            supabase,
+            artistUserId: Number(artistUser.id),
+            permissionColumn: "can_edit_artworks",
+        });
+
+        if (!editPermission.allowed) {
+            return NextResponse.json({ error: editPermission.reason ?? "Actie niet toegestaan." }, { status: 403 });
+        }
+
+        const updates: Record<string, unknown> = {
+            title: nextTitle,
+        };
+        if (typeof nextDescription === "string") updates.description = nextDescription;
+        if (typeof nextImageUrl === "string") updates.images = nextImageUrl;
+        if (nextPrice !== undefined) updates.price = nextPrice;
+
+        const { data, error } = await supabase
+            .from("artworks")
+            .update(updates)
+            .eq("id", payload.artworkId)
+            .eq("user_id", artistUser.id)
+            .select("id, title, description, images, status, created_at, denial_reason, price")
+            .maybeSingle();
+
+        if (error) {
+            return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+
+        if (!data?.id) {
+            return NextResponse.json({ error: "Kunstwerk niet gevonden." }, { status: 404 });
+        }
+
+        return NextResponse.json({
+            artwork: {
+                id: data.id,
+                title: data.title,
+                description: data.description,
+                imageUrl: Array.isArray(data.images) ? (data.images[0] ?? "") : (data.images ?? ""),
+                price: typeof data.price === "number" ? data.price : null,
+                status: (data.status ?? "pending") as ArtworkStatus,
+                created_at: data.created_at ?? null,
+                denialReason: data.denial_reason ?? null,
+            },
+        });
+    } catch (error) {
+        console.error("Artworks PATCH error", error);
+        return NextResponse.json({ error: "Serverfout bij het bijwerken van kunstwerk." }, { status: 500 });
+    }
+}
 
 export async function DELETE(request: Request) {
     let payload: DeleteBody;

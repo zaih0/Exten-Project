@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdminSession } from "src/utils/adminAuth";
 import { createAdminClient } from "src/utils/supabase/admin";
 
 type PasswordResetBody = {
@@ -18,6 +19,11 @@ const MIN_PASSWORD_LENGTH = 8;
 
 export async function GET() {
     try {
+        const auth = await requireAdminSession();
+        if ("error" in auth) {
+            return NextResponse.json({ error: auth.error }, { status: auth.status });
+        }
+
         const supabase = createAdminClient();
         const { data, error } = await supabase
             .from("admin_password_change_logs")
@@ -75,6 +81,11 @@ export async function PATCH(request: Request) {
     }
 
     try {
+        const auth = await requireAdminSession();
+        if ("error" in auth) {
+            return NextResponse.json({ error: auth.error }, { status: auth.status });
+        }
+
         const supabase = createAdminClient();
         const { data: userRow, error: userLookupError } = await supabase
             .from("users")

@@ -9,6 +9,7 @@ type Artwork = {
     title: string;
     imageUrl: string;
     description: string;
+    price?: number | null;
     status?: "pending" | "approved" | "denied";
     denialReason?: string | null;
 };
@@ -18,11 +19,13 @@ export default function ArtistEditPage() {
     const [isLoadingArtworks, setIsLoadingArtworks] = useState(true);
     const [artworksError, setArtworksError] = useState<string | null>(null);
     const [deletingArtworkId, setDeletingArtworkId] = useState<number | null>(null);
+    const [savingArtworkId, setSavingArtworkId] = useState<number | null>(null);
 
     // Upload modal state
     const [isUploadOpen, setIsUploadOpen] = useState(false);
     const [uploadTitle, setUploadTitle] = useState("");
     const [uploadDescription, setUploadDescription] = useState("");
+    const [uploadPrice, setUploadPrice] = useState("");
     const [uploadFile, setUploadFile] = useState<File | null>(null);
     const [uploadPreview, setUploadPreview] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -101,6 +104,7 @@ export default function ArtistEditPage() {
     const openUploadModal = () => {
         setUploadTitle("");
         setUploadDescription("");
+        setUploadPrice("");
         setUploadFile(null);
         setUploadPreview(null);
         setUploadError(null);
@@ -143,6 +147,7 @@ export default function ArtistEditPage() {
         formData.append("file", uploadFile);
         formData.append("title", uploadTitle);
         formData.append("description", uploadDescription);
+        formData.append("price", uploadPrice.trim());
         formData.append("userId", user.id);
         formData.append("email", user.email ?? "");
 
@@ -161,6 +166,7 @@ export default function ArtistEditPage() {
                         title: string;
                         imageUrl: string;
                         description: string;
+                        price?: number | null;
                         status?: "pending" | "approved" | "denied";
                         denialReason?: string | null;
                     };
@@ -184,6 +190,7 @@ export default function ArtistEditPage() {
                     title: result.artwork!.title,
                     imageUrl: result.artwork!.imageUrl,
                     description: result.artwork!.description ?? "",
+                    price: result.artwork!.price ?? null,
                     status: result.artwork!.status ?? "pending",
                     denialReason: result.artwork!.denialReason ?? null,
                 },
@@ -194,6 +201,59 @@ export default function ArtistEditPage() {
 
         setIsUploading(false);
         closeUploadModal();
+    };
+
+    const saveArtwork = async (artwork: Artwork) => {
+        setSavingArtworkId(artwork.id);
+        setArtworksError(null);
+
+        const supabase = createClient();
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user?.email) {
+            setArtworksError("Je bent niet ingelogd.");
+            setSavingArtworkId(null);
+            return;
+        }
+
+        const response = await fetch("/api/artworks", {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                artworkId: artwork.id,
+                email: user.email,
+                title: artwork.title,
+                description: artwork.description,
+                imageUrl: artwork.imageUrl,
+                price: artwork.price ?? null,
+            }),
+        });
+
+        const responseText = await response.text();
+        const result = (() => {
+            try {
+                return JSON.parse(responseText) as { error?: string; artwork?: Artwork };
+            } catch {
+                return null;
+            }
+        })();
+
+        if (!response.ok) {
+            setArtworksError(result?.error ?? "Kon kunstwerk niet opslaan.");
+            setSavingArtworkId(null);
+            return;
+        }
+
+        if (result?.artwork) {
+            setArtworks((current) => current.map((item) => (item.id === artwork.id ? { ...item, ...result.artwork } : item)));
+        }
+
+        setUploadMessage("Kunstwerk opgeslagen.");
+        setSavingArtworkId(null);
     };
 
     const removeArtwork = async (id: number) => {
@@ -380,9 +440,35 @@ export default function ArtistEditPage() {
                                                 placeholder="Beschrijving"
                                                 required
                                             />
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={artwork.price ?? ""}
+                                                onChange={(event) => {
+                                                    const value = event.target.value;
+                                                    setArtworks((current) =>
+                                                        current.map((item) =>
+                                                            item.id === artwork.id
+                                                                ? { ...item, price: value === "" ? null : Number(value) }
+                                                                : item,
+                                                        ),
+                                                    );
+                                                }}
+                                                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none ring-violet-300 focus:ring"
+                                                placeholder="Prijs (optioneel)"
+                                            />
                                         </div>
 
-                                        <div className="md:col-span-1 flex md:justify-end">
+                                        <div className="md:col-span-1 flex flex-col gap-2 md:justify-end">
+                                            <button
+                                                type="button"
+                                                onClick={() => void saveArtwork(artwork)}
+                                                disabled={savingArtworkId === artwork.id}
+                                                className="rounded-lg bg-emerald-100 px-3 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                            >
+                                                {savingArtworkId === artwork.id ? "Opslaan..." : "Opslaan"}
+                                            </button>
                                             <button
                                                 type="button"
                                                 onClick={() => void removeArtwork(artwork.id)}
@@ -488,6 +574,19 @@ export default function ArtistEditPage() {
                                     rows={3}
                                     placeholder="Vertel iets over dit werk..."
                                     className="rounded-xl border border-gray-200 px-4 py-3 text-gray-900 outline-none ring-violet-300 focus:ring"
+                                />
+                            </label>
+
+                            <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
+                                Prijs (optioneel)
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={uploadPrice}
+                                    onChange={(e) => setUploadPrice(e.target.value)}
+                                    placeholder="Bijv. 120.00"
+                                    className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900 outline-none ring-violet-300 focus:ring"
                                 />
                             </label>
 

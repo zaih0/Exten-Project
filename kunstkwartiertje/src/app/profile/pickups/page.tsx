@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import FollowButton from "src/app/components/profile/FollowButton";
 import useCurrentUserProfile from "src/app/components/profile/useCurrentUserProfile";
 import { createClient } from "src/utils/supabase/client";
 
@@ -9,6 +10,7 @@ type EntrepreneurPickup = {
     title: string;
     description: string;
     imageUrl: string;
+    artistUserId?: number;
     artistName?: string;
     pickupStatus?: "reserved" | "picked_up" | null;
     pickedUpAt?: string | null;
@@ -21,6 +23,7 @@ type ArtistPickup = {
     artworkTitle: string;
     artworkDescription: string;
     artworkImageUrl: string;
+    entrepreneurUserId?: number;
     entrepreneurName: string;
     pickupStatus?: "reserved" | "picked_up" | null;
     pickedUpAt?: string | null;
@@ -202,6 +205,9 @@ export default function PickupSystemPage() {
                                 <div className="p-4">
                                     <h2 className="text-base font-semibold text-zinc-900">{item.artworkTitle}</h2>
                                     <p className="mt-1 text-sm text-zinc-600">Ondernemer: {item.entrepreneurName}</p>
+                                    <div className="mt-2">
+                                        <FollowButton targetUserId={item.entrepreneurUserId} />
+                                    </div>
                                     <p className="mt-2 text-sm text-zinc-600">Status: {item.pickupStatus === "picked_up" ? "Opgehaald" : "Gereserveerd"}</p>
                                     {item.pickedUpAt && (
                                         <p className="mt-1 text-xs text-zinc-500">Opgehaald op: {new Date(item.pickedUpAt).toLocaleString("nl-NL")}</p>
@@ -240,6 +246,9 @@ export default function PickupSystemPage() {
                                     <div className="p-4">
                                         <h2 className="text-base font-semibold text-zinc-900">{item.title}</h2>
                                         <p className="mt-1 text-sm text-zinc-600">Artiest: {item.artistName || "Onbekende artiest"}</p>
+                                        <div className="mt-2">
+                                            <FollowButton targetUserId={item.artistUserId} />
+                                        </div>
                                         <p className="mt-2 text-sm text-zinc-600">Status: {item.pickupStatus === "picked_up" ? "Opgehaald" : "Gereserveerd"}</p>
 
                                         <div className="mt-3 grid grid-cols-1 gap-2">

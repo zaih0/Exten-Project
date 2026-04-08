@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import useFollowSummary from "src/app/components/profile/useFollowSummary";
 import useCurrentUserProfile from "src/app/components/profile/useCurrentUserProfile";
 import { createClient } from "src/utils/supabase/client";
 
@@ -20,6 +21,8 @@ export default function EntrepreneurProfile() {
 	const [isUploading, setIsUploading] = useState(false);
 	const [message, setMessage] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
+	const [currentEmail, setCurrentEmail] = useState<string | undefined>(undefined);
+	const { followerCount, followingCount } = useFollowSummary({ targetEmail: currentEmail });
 
 	useEffect(() => {
 		if (username) {
@@ -36,6 +39,10 @@ export default function EntrepreneurProfile() {
 			const {
 				data: { user },
 			} = await supabase.auth.getUser();
+
+			if (user?.email && isMounted) {
+				setCurrentEmail(user.email);
+			}
 
 			if (!user?.email || !isMounted) return;
 
@@ -191,9 +198,18 @@ export default function EntrepreneurProfile() {
 				<div className="flex items-center justify-between gap-4">
 					<div className="flex items-center gap-4">
 						<img src={profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileUsername || username)}`} alt="Profielfoto" className="h-16 w-16 rounded-full object-cover ring-1 ring-zinc-200" />
-						<h1 className="text-2xl font-bold">{profileUsername || username}</h1>
+						<div>
+							<h1 className="text-2xl font-bold">{profileUsername || username}</h1>
+							<div className="mt-2 flex flex-wrap gap-2 text-sm text-zinc-600">
+								<span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">{followerCount} volgers</span>
+								<span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">{followingCount} gevolgd</span>
+							</div>
+						</div>
 					</div>
 					<div className="flex items-center gap-2">
+						<Link href="/chat" className="rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-gray-900">
+							Chat hub
+						</Link>
 						<Link href="/profile/pickups" className="rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-200">
 							Pickup systeem
 						</Link>

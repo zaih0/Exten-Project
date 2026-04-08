@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 type AdminTabKey = "access" | "chat" | "kunst" | "users" | "allusers" | "resetpw" | "artworks" | "locations";
@@ -132,6 +133,8 @@ const formatRequestDate = (value: string | null) => {
 };
 
 export default function AdminPage() {
+    const searchParams = useSearchParams();
+    const forceLogin = searchParams.get("login") === "1";
     const [activeTab, setActiveTab] = useState<AdminTabKey>("access");
     const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
     const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
@@ -343,11 +346,6 @@ export default function AdminPage() {
             setIsLoadingArtworkRequests(false);
         };
 
-        void loadPendingRequests();
-        void loadBlockedUsers();
-        void loadPendingArtworkRequests();
-        void loadPasswordLogs();
-
         const loadAllUsers = async () => {
             const response = await fetch("/api/admin/users", {
                 method: "GET",
@@ -371,8 +369,6 @@ export default function AdminPage() {
             setAllUsers(result?.users ?? []);
             setIsLoadingAllUsers(false);
         };
-
-        void loadAllUsers();
 
         const loadAllArtworks = async () => {
             setIsLoadingAllArtworks(true);
@@ -419,6 +415,12 @@ export default function AdminPage() {
         };
 
         void (async () => {
+            if (forceLogin) {
+                await fetch("/api/admin/auth/logout", { method: "POST" }).catch(() => undefined);
+                setLoggedOutState();
+                return;
+            }
+
             const isAuthenticated = await loadAdminSession();
             if (!isAuthenticated || !isMounted) return;
 
@@ -436,7 +438,7 @@ export default function AdminPage() {
             }
             window.removeEventListener("focus", handleFocus);
         };
-    }, []);
+    }, [forceLogin]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

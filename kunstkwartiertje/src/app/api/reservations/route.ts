@@ -140,6 +140,7 @@ export async function GET(request: Request) {
 
             return {
                 id: item.id,
+                artistUserId: Number(item.user_id),
                 title: item.title,
                 description: item.description,
                 imageUrl: Array.isArray(item.images) ? (item.images[0] ?? "") : (item.images ?? ""),

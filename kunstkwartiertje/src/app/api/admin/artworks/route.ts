@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdminSession } from "src/utils/adminAuth";
 import { createAdminClient } from "src/utils/supabase/admin";
 
 type AdminArtworkRow = {
@@ -14,6 +15,11 @@ type AdminArtworkRow = {
 
 export async function GET() {
     try {
+        const auth = await requireAdminSession();
+        if ("error" in auth) {
+            return NextResponse.json({ error: auth.error }, { status: auth.status });
+        }
+
         const supabase = createAdminClient();
 
         const { data, error } = await supabase
@@ -125,6 +131,11 @@ export async function PATCH(request: Request) {
     if (formData.has("description")) updates.description = description;
 
     try {
+        const auth = await requireAdminSession();
+        if ("error" in auth) {
+            return NextResponse.json({ error: auth.error }, { status: auth.status });
+        }
+
         const supabase = createAdminClient();
 
         // Handle image replacement
@@ -226,6 +237,11 @@ export async function DELETE(request: Request) {
     }
 
     try {
+        const auth = await requireAdminSession();
+        if ("error" in auth) {
+            return NextResponse.json({ error: auth.error }, { status: auth.status });
+        }
+
         const supabase = createAdminClient();
 
         // Fetch first so we can clean up storage after deletion

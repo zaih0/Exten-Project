@@ -100,6 +100,7 @@ export async function GET(request: Request) {
                 artworkImageUrl: Array.isArray(artwork?.images)
                     ? (artwork?.images?.[0] ?? "")
                     : (artwork?.images ?? ""),
+                entrepreneurUserId: Number(reservation.user_id),
                 entrepreneurName: entrepreneur?.username ?? entrepreneur?.email ?? "Onbekende ondernemer",
                 pickupStatus: reservation.pickup_status ?? "reserved",
                 pickedUpAt: reservation.picked_up_at ?? null,
