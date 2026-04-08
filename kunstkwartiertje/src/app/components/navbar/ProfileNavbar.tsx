@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import useSiteContent from "src/app/components/cms/useSiteContent";
 import useCurrentUserProfile from "src/app/components/profile/useCurrentUserProfile";
 import { createClient } from "src/utils/supabase/client";
 
@@ -25,6 +26,9 @@ export default function ProfileNavbar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const { username, role } = useCurrentUserProfile();
+  const { content } = useSiteContent();
+  const navbarLogoWidth = Number(content.branding.navbarLogoWidth) || 140;
+  const navbarLogoHeight = Number(content.branding.navbarLogoHeight) || 42;
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -75,11 +79,12 @@ export default function ProfileNavbar() {
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/art_gallery" className="flex items-center" aria-label="Ga naar art gallery">
           <Image
-            src="/kunstkwartiertje-logo.png"
+            src={content.branding.logoUrl || "/kunstkwartiertje-logo.png"}
             alt="Kunstkwartiertje"
-            width={140}
-            height={42}
-            className="h-auto w-auto max-h-10 object-contain"
+            width={navbarLogoWidth}
+            height={navbarLogoHeight}
+            className="object-contain"
+            style={{ width: `${navbarLogoWidth}px`, height: `${navbarLogoHeight}px` }}
             priority
           />
         </Link>
@@ -120,7 +125,7 @@ export default function ProfileNavbar() {
                 onClick={handleViewProfile}
                 className="w-full rounded-lg px-3 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100"
               >
-                Bekijk profiel
+                {content.navbar.viewProfileLabel}
               </button>
               <button
                 type="button"
@@ -128,7 +133,7 @@ export default function ProfileNavbar() {
                 onClick={handleViewReservations}
                 className="w-full rounded-lg px-3 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100"
               >
-                Mijn reserveringen
+                {content.navbar.reservationsLabel}
               </button>
               <button
                 type="button"
@@ -136,7 +141,7 @@ export default function ProfileNavbar() {
                 onClick={handleViewPickups}
                 className="w-full rounded-lg px-3 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100"
               >
-                Pickup systeem
+                {content.navbar.pickupsLabel}
               </button>
               <button
                 type="button"
@@ -144,7 +149,7 @@ export default function ProfileNavbar() {
                 onClick={handleLogout}
                 className="w-full rounded-lg px-3 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100"
               >
-                Log out
+                {content.navbar.logoutLabel}
               </button>
             </div>
           )}

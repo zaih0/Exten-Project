@@ -1707,8 +1707,16 @@ export default function AdminPage() {
                                 Beheer toegangsverzoeken en moderatie vanaf één overzicht.
                             </p>
                         </div>
-                        <div className="rounded-full bg-purple-100 px-3 py-1.5 text-xs font-semibold text-purple-700">
-                            {pendingCount} wachtend{pendingCount === 1 ? " verzoek" : "e verzoeken"}
+                        <div className="flex items-center gap-2">
+                            <a
+                                href="/admin/cms"
+                                className="rounded-full bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700"
+                            >
+                                Open CMS editor
+                            </a>
+                            <div className="rounded-full bg-purple-100 px-3 py-1.5 text-xs font-semibold text-purple-700">
+                                {pendingCount} wachtend{pendingCount === 1 ? " verzoek" : "e verzoeken"}
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import useSiteContent from "src/app/components/cms/useSiteContent";
 import FollowButton from "src/app/components/profile/FollowButton";
 import { createClient } from "src/utils/supabase/client";
 
@@ -28,6 +29,7 @@ type ArtistGroup = {
 };
 
 export default function Home() {
+    const { content } = useSiteContent();
     const [artworks, setArtworks] = useState<Artwork[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -178,18 +180,18 @@ export default function Home() {
     };
 
     return (
-        <div className="min-h-screen bg-stone-200 px-4 py-8 sm:px-6 lg:px-10">
-            <div className="mx-auto w-full max-w-7xl rounded-3xl border border-stone-300 bg-stone-100/95 p-6 shadow-[0_12px_36px_rgba(38,25,13,0.18)] sm:p-8">
+        <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-10" style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}>
+            <div className="mx-auto w-full max-w-7xl rounded-3xl border border-stone-300 p-6 shadow-[0_12px_36px_rgba(38,25,13,0.18)] sm:p-8" style={{ backgroundColor: "var(--kk-card)", borderRadius: "var(--kk-radius)" }}>
                 <div className="mb-5 flex flex-col items-center text-center">
-                    <h1 className="text-xl font-semibold tracking-[0.2em] text-stone-800 sm:text-2xl">Art gallery</h1>
+                    <h1 className="text-xl font-semibold tracking-[0.2em] text-stone-800 sm:text-2xl">{content.gallery.title}</h1>
                     <p className="mt-3 max-w-2xl text-sm leading-relaxed text-stone-700 sm:text-base">
-                        Bekijk goedgekeurde kunstwerken uit de community.
+                        {content.gallery.subtitle}
                     </p>
                 </div>
 
                 {isLoading ? (
                     <div className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                        Kunstwerken laden...
+                        {content.gallery.loadingText}
                     </div>
                 ) : error ? (
                     <div className="w-full rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -197,7 +199,7 @@ export default function Home() {
                     </div>
                 ) : artworks.length === 0 ? (
                     <div className="w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700">
-                        Nog geen goedgekeurde kunstwerken beschikbaar.
+                        {content.gallery.emptyText}
                     </div>
                 ) : (
                     <div className="w-full space-y-8">
@@ -205,6 +207,7 @@ export default function Home() {
                             <section
                                 key={artistGroup.artistKey}
                                 className="rounded-2xl border border-stone-300 bg-gradient-to-b from-stone-50 to-stone-100 px-4 py-5 shadow-inner sm:px-5"
+                                style={{ background: "var(--kk-card)", borderRadius: "var(--kk-radius)" }}
                             >
                                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="flex items-center gap-3">

@@ -3,6 +3,13 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --kk-primary: #7c3aed;
+  --kk-accent: #f59e0b;
+  --kk-button-text: #111827;
+  --kk-on-primary: #ffffff;
+  --kk-on-accent: #111827;
+  --kk-card: #ffffff;
+  --kk-radius: 16px;
 }
 
 @theme inline {
@@ -23,4 +30,25 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.kk-surface {
+  background-color: var(--kk-card);
+  border-radius: var(--kk-radius);
+}
+
+.kk-primary {
+  color: var(--kk-primary);
+}
+
+.kk-primary-bg {
+  background-color: var(--kk-primary);
+  color: #ffffff;
+  border-radius: var(--kk-radius);
+}
+
+.kk-accent-bg {
+  background-color: var(--kk-accent);
+  color: #1f2937;
+  border-radius: var(--kk-radius);
 }
