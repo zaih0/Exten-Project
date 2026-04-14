@@ -2375,7 +2375,7 @@ export default function AdminPage() {
                                                             <p className="text-xs text-zinc-500">
                                                                 {group.artworks[0]?.locationAddress ?? "Geen adres"}
                                                             </p>
-                                                            {group.locationAddress && (
+                                                            {group.artworks[0]?.locationAddress && (
                                                                 <a
                                                                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(group.artworks[0]?.locationAddress ?? "")}`}
                                                                     target="_blank"
