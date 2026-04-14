@@ -216,7 +216,7 @@ const LoginPage = () => {
           >
             Wachtwoord vergeten?
           </a>
-          <a href="/admin?login=1" className="text-gray-600 hover:text-gray-900">
+          <a href="/admin" className="text-gray-600 hover:text-gray-900">
             Admin login
           </a>
         </div>

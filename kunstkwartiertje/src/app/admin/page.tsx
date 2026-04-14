@@ -101,7 +101,6 @@ const formatRequestDate = (value: string | null) => {
 };
 
 export default function AdminPage() {
-    const [forceLogin, setForceLogin] = useState<boolean | null>(null);
     const [activeTab, setActiveTab] = useState<AdminTabKey>("access");
     const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
     const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
@@ -160,15 +159,6 @@ export default function AdminPage() {
     const notificationRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
-        const nextForceLogin = new URLSearchParams(window.location.search).get("login") === "1";
-        setForceLogin(nextForceLogin);
-    }, []);
-
-    useEffect(() => {
-        if (forceLogin === null) {
-            return;
-        }
-
         let isMounted = true;
 
         const setLoggedOutState = () => {
@@ -391,12 +381,6 @@ export default function AdminPage() {
         };
 
         void (async () => {
-            if (forceLogin) {
-                await fetch("/api/admin/auth/logout", { method: "POST" }).catch(() => undefined);
-                setLoggedOutState();
-                return;
-            }
-
             const isAuthenticated = await loadAdminSession();
             if (!isAuthenticated || !isMounted) return;
 
@@ -414,7 +398,7 @@ export default function AdminPage() {
             }
             window.removeEventListener("focus", handleFocus);
         };
-    }, [forceLogin]);
+    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
