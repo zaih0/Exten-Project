@@ -1,6 +1,5 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 type AdminTabKey = "access" | "chat" | "kunst" | "users" | "allusers" | "resetpw" | "artworks" | "locations";
@@ -102,8 +101,7 @@ const formatRequestDate = (value: string | null) => {
 };
 
 export default function AdminPage() {
-    const searchParams = useSearchParams();
-    const forceLogin = searchParams.get("login") === "1";
+    const [forceLogin, setForceLogin] = useState<boolean | null>(null);
     const [activeTab, setActiveTab] = useState<AdminTabKey>("access");
     const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
     const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
@@ -162,6 +160,15 @@ export default function AdminPage() {
     const notificationRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
+        const nextForceLogin = new URLSearchParams(window.location.search).get("login") === "1";
+        setForceLogin(nextForceLogin);
+    }, []);
+
+    useEffect(() => {
+        if (forceLogin === null) {
+            return;
+        }
+
         let isMounted = true;
 
         const setLoggedOutState = () => {
