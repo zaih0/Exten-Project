@@ -20,6 +20,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
+    if (!("email" in result)) {
+        return NextResponse.json({ error: "Admin account mist e-mail in admin_users." }, { status: 500 });
+    }
+
     await setAdminSessionCookie(result.email);
     return NextResponse.json({ ok: true, email: result.email });
 }
