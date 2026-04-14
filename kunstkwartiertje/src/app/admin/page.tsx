@@ -76,37 +76,6 @@ const adminTabs: Array<{ key: AdminTabKey; label: string }> = [
     { key: "locations", label: "Locatiebeheer" },
 ];
 
-const adminTabExamples: Record<AdminTabKey, string[]> = {
-    access: [
-        "Gebruiker vraagt toegang aan (nieuwe artiest/partner aanvraag).",
-        "Toegang wordt geweigerd door ontbrekende verificatie/gegevens.",
-        "Nieuwe gebruiker vraagt toegang na het invullen van aanvullende info.",
-    ],
-    chat: [
-        "Mogelijke spam of herhaald ongewenst gedrag in berichten.",
-        "Discussies met beledigingen/haatdragende taal die gemodereerd moeten worden.",
-        "Verdachte links of pogingen tot phishing via chatberichten.",
-    ],
-    kunst: [
-        "Inzending bevat mogelijk auteursrechtelijk beschermde content.",
-        "Kunstwerk lijkt ongepast (bv. geweld/naaktheid) of mist context.",
-        "Dubbele/repeteerde inzendingen die verwijderd/afgekeurd moeten worden.",
-    ],
-    users: [
-        "Account is herhaaldelijk in overtreding en verdient verwijdering.",
-        "Verdacht gedrag of misbruik (bv. ban-omzeiling).",
-        "Rapporten van meerdere gebruikers die samen een actie vragen.",
-    ],
-    allusers: [],
-    resetpw: [
-        "Gebruiker wil een wachtwoordherstel aanvragen (normale flow).",
-        "Herstel wordt geblokkeerd door risicovolle/potentieel frauduleuze activiteit.",
-        "Wachtwoordherstel voor accounts die tijdelijk vergrendeld zijn.",
-    ],
-    artworks: [],
-    locations: [],
-};
-
 const roleLabels: Record<string, string> = {
     begeleider: "Begeleider",
     ondernemer: "Ondernemer",
@@ -2444,16 +2413,9 @@ export default function AdminPage() {
                                         )}
                                     </div>
                                 ) : (
-                                    <ul className="mt-3 space-y-2 text-sm text-zinc-700/90">
-                                        {adminTabExamples[activeTab].map((example) => (
-                                            <li
-                                                key={example}
-                                                className="rounded-md bg-purple-50/70 px-3 py-2 ring-1 ring-purple-200/60"
-                                            >
-                                                {example}
-                                            </li>
-                                        ))}
-                                    </ul>
+                                    <div className="mt-3 rounded-md bg-purple-50/70 px-3 py-2 text-sm text-zinc-700/90 ring-1 ring-purple-200/60">
+                                        Geen voorbeelden beschikbaar voor dit tabblad.
+                                    </div>
                                 )}
 
                             </div>
