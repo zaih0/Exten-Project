@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ status: null, blocked: false });
     }
 
-    return NextResponse.json({ status: data.status, blocked: Boolean(data.block_status) });
+    return NextResponse.json({ status: data.status, blocked: Boolean(data.blocked_status) });
   } catch (error) {
     console.error("User status route error", error);
     return NextResponse.json(
