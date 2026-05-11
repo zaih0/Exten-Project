@@ -300,13 +300,7 @@ export default function ArtistEditPage() {
 
     return (
         <>
-        <div
-            className="flex min-h-screen items-start justify-center px-4 py-10 md:px-8"
-            style={{
-                backgroundImage:
-                    "radial-gradient(circle at 12% 18%, rgba(232, 121, 249, 0.34) 0%, rgba(196, 181, 253, 0.20) 30%, rgba(255,255,255,0) 62%), radial-gradient(circle at 86% 12%, rgba(168, 85, 247, 0.34) 0%, rgba(129, 140, 248, 0.18) 34%, rgba(255,255,255,0) 62%), radial-gradient(circle at 50% 92%, rgba(217, 70, 239, 0.26) 0%, rgba(139, 92, 246, 0.14) 38%, rgba(255,255,255,0) 68%), linear-gradient(135deg, rgba(250, 245, 255, 1) 0%, rgba(237, 233, 254, 1) 38%, rgba(243, 232, 255, 1) 68%, rgba(253, 242, 248, 1) 100%)",
-            }}
-        >
+        <div className="flex min-h-screen items-start justify-center bg-white px-4 py-10 md:px-8">
             <div className="w-full max-w-5xl rounded-2xl border border-gray-100 bg-white/95 p-6 shadow-sm md:p-8">
                 <div className="mb-6 flex flex-col gap-4 border-b border-gray-100 pb-5 md:flex-row md:items-center md:justify-between">
                     <div>

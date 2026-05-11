@@ -337,13 +337,7 @@ export default function ArtistProfile() {
 
     return (
         <>
-        <div
-        className="flex flex-col min-h-screen items-center justify-center font-sans text-zinc-900"
-        style={{
-            backgroundImage:
-            "radial-gradient(circle at 12% 18%, rgba(232, 121, 249, 0.34) 0%, rgba(196, 181, 253, 0.20) 30%, rgba(255,255,255,0) 62%), radial-gradient(circle at 86% 12%, rgba(168, 85, 247, 0.34) 0%, rgba(129, 140, 248, 0.18) 34%, rgba(255,255,255,0) 62%), radial-gradient(circle at 50% 92%, rgba(217, 70, 239, 0.26) 0%, rgba(139, 92, 246, 0.14) 38%, rgba(255,255,255,0) 68%), linear-gradient(135deg, rgba(250, 245, 255, 1) 0%, rgba(237, 233, 254, 1) 38%, rgba(243, 232, 255, 1) 68%, rgba(253, 242, 248, 1) 100%)",
-        }}
-        >
+        <div className="flex flex-col min-h-screen items-center justify-center bg-white font-sans text-zinc-900">
 
         <div className="w-full max-w-5xl lg:max-w-6xl mx-auto p-4 md:p-8">
             {/* Header Section */}
