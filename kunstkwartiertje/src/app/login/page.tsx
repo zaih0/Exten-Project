@@ -1,18 +1,21 @@
 "use client";
 
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "src/utils/supabase/client";
 
 const LoginPage = () => {
   const supabase = createClient();
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const approvalStatus = searchParams.get("approval");
+  const [approvalStatus, setApprovalStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    const nextApprovalStatus = new URLSearchParams(window.location.search).get("approval");
+    setApprovalStatus(nextApprovalStatus);
+  }, []);
 
   const approvalMessage = useMemo(() => {
     if (approvalStatus === "blocked") {
@@ -213,7 +216,7 @@ const LoginPage = () => {
           >
             Wachtwoord vergeten?
           </a>
-          <a href="/admin?login=1" className="text-gray-600 hover:text-gray-900">
+          <a href="/admin" className="text-gray-600 hover:text-gray-900">
             Admin login
           </a>
         </div>

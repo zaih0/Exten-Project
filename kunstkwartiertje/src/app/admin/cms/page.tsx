@@ -197,7 +197,7 @@ export default function AdminCmsPage() {
         return (
             <div className="min-h-screen bg-zinc-50 p-6 text-zinc-900">
                 <div className="mx-auto max-w-5xl rounded-2xl border border-rose-200 bg-rose-50 p-6 text-rose-700">
-                    Admin login vereist. <Link href="/admin?login=1" className="font-semibold underline">Ga naar admin login</Link>.
+                    Admin login vereist. <Link href="/admin" className="font-semibold underline">Ga naar admin login</Link>.
                 </div>
             </div>
         );

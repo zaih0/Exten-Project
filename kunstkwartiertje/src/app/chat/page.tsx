@@ -90,7 +90,7 @@ const roleLabel = (role: string) => {
 };
 
 export default function ChatPage() {
-    const [currentUser, setCurrentUser] = useState<ChatContactsResponse["currentUser"]>(null);
+    const [currentUser, setCurrentUser] = useState<ChatContactsResponse["currentUser"] | null>(null);
     const [contacts, setContacts] = useState<ChatContact[]>([]);
     const [categories, setCategories] = useState<Record<ChatCategoryKey, ChatContact[]>>({
         admins: [],
