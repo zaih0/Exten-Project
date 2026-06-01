@@ -52,10 +52,10 @@ values
     ('heroLayout.subtitleOffsetY', '0'),
     ('heroLayout.ctaOffsetY', '0'),
     ('theme.backgroundColor', '#ffffff'),
-    ('theme.foregroundColor', '#171717'),
-    ('theme.primaryColor', '#7c3aed'),
-    ('theme.accentColor', '#f59e0b'),
-    ('theme.buttonTextColor', '#111827'),
+    ('theme.foregroundColor', '#111111'),
+    ('theme.primaryColor', '#111111'),
+    ('theme.accentColor', '#2563eb'),
+    ('theme.buttonTextColor', '#ffffff'),
     ('theme.cardColor', '#ffffff'),
-    ('theme.radius', '16')
+    ('theme.radius', '0')
 on conflict (content_key) do nothing;

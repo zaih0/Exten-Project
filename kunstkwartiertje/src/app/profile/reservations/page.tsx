@@ -76,19 +76,19 @@ export default function ReservedArtworksPage() {
 
     return (
         <div className="min-h-screen bg-zinc-50 p-4 md:p-8">
-            <div className="mx-auto w-full max-w-6xl rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm md:p-8">
+            <div className="mx-auto w-full max-w-6xl rounded-none border border-zinc-200 bg-white p-5 shadow-sm md:p-8">
                 <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
                     <h1 className="text-2xl font-bold text-zinc-900">Mijn reserveringen</h1>
                     <div className="flex gap-2">
                         <Link
                             href="/profile/pickups"
-                            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                            className="rounded-none border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
                         >
                             Pickup systeem
                         </Link>
                         <Link
                             href="/art_gallery"
-                            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                            className="rounded-none border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
                         >
                             Terug naar gallery
                         </Link>
@@ -96,15 +96,15 @@ export default function ReservedArtworksPage() {
                 </div>
 
                 {isLoading ? (
-                    <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700">
+                    <div className="rounded-none border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
                         Reserveringen laden...
                     </div>
                 ) : error ? (
-                    <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                    <div className="rounded-none border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                         {error}
                     </div>
                 ) : artworks.length === 0 ? (
-                    <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+                    <div className="rounded-none border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
                         Je hebt nog geen gereserveerde kunstwerken.
                     </div>
                 ) : (
@@ -112,7 +112,7 @@ export default function ReservedArtworksPage() {
                         {artworks.map((artwork) => (
                             <article
                                 key={artwork.id}
-                                className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm"
+                                className="overflow-hidden rounded-none border border-zinc-200 bg-white shadow-sm"
                             >
                                 <div className="h-56 w-full bg-zinc-100">
                                     <img

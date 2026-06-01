@@ -35,7 +35,7 @@ export default function FollowButton({ targetUserId, className }: FollowButtonPr
                         .finally(() => setIsBusy(false));
                 }}
                 disabled={isBusy || isLoading}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                className={`rounded-none px-3 py-1.5 text-xs font-semibold transition ${
                     isFollowing
                         ? "bg-white text-zinc-800 ring-1 ring-zinc-300 hover:bg-zinc-100"
                         : "bg-black text-white hover:bg-zinc-800"

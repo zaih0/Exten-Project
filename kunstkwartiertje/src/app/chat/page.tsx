@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type ChatCategoryKey = "admins" | "entrepreneurs" | "artists" | "accompanists";
@@ -90,6 +91,8 @@ const roleLabel = (role: string) => {
 };
 
 export default function ChatPage() {
+    const searchParams = useSearchParams();
+    const requestedContactId = Number(searchParams.get("contactId"));
     const [currentUser, setCurrentUser] = useState<ChatContactsResponse["currentUser"] | null>(null);
     const [contacts, setContacts] = useState<ChatContact[]>([]);
     const [categories, setCategories] = useState<Record<ChatCategoryKey, ChatContact[]>>({
@@ -110,6 +113,7 @@ export default function ChatPage() {
     const [error, setError] = useState<string | null>(null);
     const [messageError, setMessageError] = useState<string | null>(null);
     const [messageInfo, setMessageInfo] = useState<string | null>(null);
+    const [contactQuery, setContactQuery] = useState("");
     const [pendingRequests, setPendingRequests] = useState<{ outgoing: ChatRequest[]; incoming: ChatRequest[] }>({ outgoing: [], incoming: [] });
     const [followingBack, setFollowingBack] = useState<number | null>(null);
     const [chatEnabled, setChatEnabled] = useState(true);
@@ -282,10 +286,60 @@ export default function ChatPage() {
         messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    const filteredContacts = useMemo(
-        () => categories[activeCategory as ChatCategoryKey] ?? [],
-        [activeCategory, categories],
-    );
+    const filteredContacts = useMemo(() => {
+        const base = categories[activeCategory as ChatCategoryKey] ?? [];
+        const query = contactQuery.trim().toLowerCase();
+        if (!query) return base;
+        return base.filter(
+            (contact) =>
+                contact.username.toLowerCase().includes(query) ||
+                contact.email.toLowerCase().includes(query),
+        );
+    }, [activeCategory, categories, contactQuery]);
+
+    const categoryUnreadCounts = useMemo<Record<ChatCategoryKey, number>>(() => {
+        const keys = Object.keys(categoryLabels) as ChatCategoryKey[];
+        return keys.reduce(
+            (acc, key) => {
+                acc[key] = (categories[key] ?? []).reduce((total, contact) => total + (contact.unreadCount ?? 0), 0);
+                return acc;
+            },
+            {
+                admins: 0,
+                entrepreneurs: 0,
+                artists: 0,
+                accompanists: 0,
+            } as Record<ChatCategoryKey, number>,
+        );
+    }, [categories]);
+
+    const categoriesWithUnread = useMemo(() => {
+        return (Object.keys(categoryLabels) as ChatCategoryKey[]).filter((key) => categoryUnreadCounts[key] > 0);
+    }, [categoryUnreadCounts]);
+
+    useEffect(() => {
+        if (!Number.isFinite(requestedContactId) || requestedContactId <= 0) return;
+        if (!contacts.some((contact) => contact.id === requestedContactId)) return;
+
+        const targetCategory = (Object.keys(categories) as ChatCategoryKey[]).find((category) =>
+            (categories[category] ?? []).some((contact) => contact.id === requestedContactId),
+        );
+
+        if (targetCategory && activeCategory !== targetCategory) {
+            setActiveCategory(targetCategory);
+        }
+
+        if (selectedContactId !== requestedContactId) {
+            setSelectedContactId(requestedContactId);
+        }
+    }, [
+        activeCategory,
+        categories,
+        contacts,
+        requestedContactId,
+        selectedContactId,
+    ]);
+
     const selectedContact = useMemo(
         () => contacts.find((contact: ChatContact) => contact.id === selectedContactId) ?? null,
         [contacts, selectedContactId],
@@ -349,7 +403,7 @@ export default function ChatPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#f5f5f5] px-4 py-8">
+        <div className="min-h-screen bg-white px-4 py-6">
             <div className="mx-auto w-full max-w-7xl">
                 <div className="mb-8 flex flex-col items-center justify-between gap-4 md:flex-row">
                     <div className="flex items-center gap-3">
@@ -367,7 +421,7 @@ export default function ChatPage() {
                     </div>
                     <Link
                         href="/art_gallery"
-                        className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100"
+                        className="rounded-none border border-black bg-white px-4 py-2 text-sm font-medium text-black hover:bg-gray-100"
                     >
                         Terug naar overzicht
                     </Link>
@@ -376,15 +430,15 @@ export default function ChatPage() {
                 {error ? (
                     <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
                 ) : (
-                    <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-                        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
+                        <div className="border border-black bg-white p-4">
                             <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Categorieën</h2>
 
                             {(pendingRequests.incoming.length > 0 || pendingRequests.outgoing.length > 0) && (
-                                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-3">
+                                <div className="mt-4 border border-blue-200 bg-blue-50 p-3 space-y-3">
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm font-semibold text-amber-800">Chatverzoeken</span>
-                                        <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-[11px] font-bold text-white">
+                                        <span className="rounded-none bg-blue-600 px-1.5 py-0.5 text-[11px] font-bold text-white">
                                             {pendingRequests.incoming.length + pendingRequests.outgoing.length}
                                         </span>
                                     </div>
@@ -394,7 +448,7 @@ export default function ChatPage() {
                                             <p className="mb-1.5 text-xs font-medium text-amber-700">Ontvangen — volg terug om te chatten</p>
                                             <div className="space-y-1.5">
                                                 {pendingRequests.incoming.map((req) => (
-                                                    <div key={req.id} className="flex items-center justify-between gap-2 rounded-lg border border-amber-100 bg-white px-2.5 py-2">
+                                                    <div key={req.id} className="flex items-center justify-between gap-2 border border-blue-100 bg-white px-2.5 py-2">
                                                         <div className="flex min-w-0 items-center gap-2">
                                                             <img
                                                                 src={req.profilePic ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(req.username)}&size=24&background=f5f5f5&color=111`}
@@ -410,7 +464,7 @@ export default function ChatPage() {
                                                             type="button"
                                                             onClick={() => void handleFollowBack(req.id)}
                                                             disabled={followingBack === req.id}
-                                                            className="shrink-0 rounded-full bg-black px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-gray-800 disabled:opacity-60"
+                                                            className="shrink-0 rounded-none bg-black px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-gray-800 disabled:opacity-60"
                                                         >
                                                             {followingBack === req.id ? "Bezig..." : "Volg terug"}
                                                         </button>
@@ -425,7 +479,7 @@ export default function ChatPage() {
                                             <p className="mb-1.5 text-xs font-medium text-amber-700">Verzonden — wacht op reactie</p>
                                             <div className="space-y-1.5">
                                                 {pendingRequests.outgoing.map((req) => (
-                                                    <div key={req.id} className="flex items-center justify-between gap-2 rounded-lg border border-amber-100 bg-white px-2.5 py-2">
+                                                    <div key={req.id} className="flex items-center justify-between gap-2 border border-blue-100 bg-white px-2.5 py-2">
                                                         <div className="flex min-w-0 items-center gap-2">
                                                             <img
                                                                 src={req.profilePic ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(req.username)}&size=24&background=f5f5f5&color=111`}
@@ -437,7 +491,7 @@ export default function ChatPage() {
                                                                 <p className="text-[10px] text-gray-400">{roleLabel(req.role)}</p>
                                                             </div>
                                                         </div>
-                                                        <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500 ring-1 ring-gray-200">
+                                                        <span className="shrink-0 rounded-none bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500 ring-1 ring-gray-200">
                                                             Wacht op reactie
                                                         </span>
                                                     </div>
@@ -448,13 +502,26 @@ export default function ChatPage() {
                                 </div>
                             )}
 
+                            {categoriesWithUnread.length > 0 && (
+                                <div className="mt-3 border border-black bg-gray-50 px-3 py-2">
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-700">Nieuwe berichten</p>
+                                    <div className="mt-1 flex flex-wrap gap-1.5">
+                                        {categoriesWithUnread.map((category) => (
+                                            <span key={category} className="rounded-none bg-black px-2 py-0.5 text-[11px] font-semibold text-white">
+                                                {categoryLabels[category]} ({categoryUnreadCounts[category]})
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="mt-4 grid grid-cols-2 gap-2">
                                 {(Object.keys(categoryLabels) as ChatCategoryKey[]).map((category: ChatCategoryKey) => (
                                     <button
                                         key={category}
                                         type="button"
                                         onClick={() => setActiveCategory(category)}
-                                        className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                                        className={`relative rounded-none border px-3 py-2 text-sm font-medium transition ${
                                             activeCategory === category
                                                 ? "border-black bg-black text-white"
                                                 : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
@@ -462,15 +529,34 @@ export default function ChatPage() {
                                     >
                                         <span>{categoryLabels[category]}</span>
                                         <span className="ml-2 text-xs opacity-80">{categories[category as ChatCategoryKey]?.length ?? 0}</span>
+                                        {categoryUnreadCounts[category] > 0 && (
+                                            <span
+                                                className={`absolute -right-1.5 -top-1.5 rounded-none px-1.5 py-0.5 text-[10px] font-bold ${
+                                                    activeCategory === category ? "bg-white text-black" : "bg-black text-white"
+                                                }`}
+                                            >
+                                                {categoryUnreadCounts[category]}
+                                            </span>
+                                        )}
                                     </button>
                                 ))}
                             </div>
 
+                            <div className="mt-3">
+                                <input
+                                    type="text"
+                                    value={contactQuery}
+                                    onChange={(event) => setContactQuery(event.target.value)}
+                                    placeholder="Zoek op naam of e-mail"
+                                    className="w-full rounded-none border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
+                                />
+                            </div>
+
                             <div className="mt-5 space-y-2">
                                 {isLoadingContacts ? (
-                                    <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-600">Contacten laden...</div>
+                                    <div className="border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-600">Contacten laden...</div>
                                 ) : filteredContacts.length === 0 ? (
-                                    <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-600">
+                                    <div className="border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-600">
                                         Geen contacten in deze categorie.
                                     </div>
                                 ) : (
@@ -479,7 +565,7 @@ export default function ChatPage() {
                                             key={contact.id}
                                             type="button"
                                             onClick={() => setSelectedContactId(contact.id)}
-                                            className={`w-full rounded-xl border px-3 py-3 text-left transition ${
+                                            className={`w-full rounded-none border px-3 py-3 text-left transition ${
                                                 selectedContactId === contact.id
                                                     ? "border-black bg-black text-white"
                                                     : "border-gray-200 bg-white text-gray-800 hover:bg-gray-50"
@@ -495,7 +581,7 @@ export default function ChatPage() {
                                                     </p>
                                                 </div>
                                                 {contact.unreadCount > 0 && (
-                                                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                                    <span className={`rounded-none px-2 py-0.5 text-xs font-semibold ${
                                                         selectedContactId === contact.id ? "bg-white text-black" : "bg-black text-white"
                                                     }`}>
                                                         {contact.unreadCount}
@@ -516,7 +602,7 @@ export default function ChatPage() {
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                        <div className="border border-black bg-white">
                             <div className="border-b border-gray-200 px-5 py-4">
                                 {selectedContact ? (
                                     <div className="flex items-center justify-between gap-4">
@@ -536,24 +622,24 @@ export default function ChatPage() {
                                 )}
                             </div>
 
-                            <div className="flex min-h-[560px] flex-col">
+                            <div className="flex min-h-[620px] flex-col">
                                 <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
                                     {messageError && (
-                                        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{messageError}</div>
+                                        <div className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{messageError}</div>
                                     )}
                                     {messageInfo && !messageError && (
-                                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{messageInfo}</div>
+                                        <div className="border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{messageInfo}</div>
                                     )}
                                     {!selectedContact ? (
-                                        <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-6 text-sm text-gray-600">
+                                        <div className="border border-gray-200 bg-gray-50 px-4 py-6 text-sm text-gray-600">
                                             Selecteer een gebruiker uit een categorie om een gesprek te openen.
                                         </div>
                                     ) : isLoadingMessages && !hasLoadedConversationRef.current ? (
-                                        <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-6 text-sm text-gray-600">
+                                        <div className="border border-gray-200 bg-gray-50 px-4 py-6 text-sm text-gray-600">
                                             Berichten laden...
                                         </div>
                                     ) : messages.length === 0 ? (
-                                        <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-6 text-sm text-gray-600">
+                                        <div className="border border-gray-200 bg-gray-50 px-4 py-6 text-sm text-gray-600">
                                             Nog geen berichten. Start het gesprek hieronder.
                                         </div>
                                     ) : (
@@ -562,7 +648,7 @@ export default function ChatPage() {
                                             return (
                                                 <div key={item.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
                                                     <div
-                                                        className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
+                                                        className={`max-w-[75%] rounded-none px-4 py-3 shadow-sm ${
                                                             isOwn ? "bg-black text-white" : "bg-gray-100 text-gray-900"
                                                         }`}
                                                     >
@@ -570,7 +656,7 @@ export default function ChatPage() {
                                                             <img
                                                                 src={item.imageUrl}
                                                                 alt="Verstuurde foto"
-                                                                className="mb-2 max-h-64 w-full rounded-xl object-cover"
+                                                                className="mb-2 max-h-64 w-full rounded-none object-cover"
                                                             />
                                                         )}
                                                         {item.message && <p className="whitespace-pre-wrap text-sm">{item.message}</p>}
@@ -588,17 +674,17 @@ export default function ChatPage() {
 
                                 <div className="border-t border-gray-200 px-5 py-4">
                                     {!chatEnabled && (
-                                        <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                                        <div className="mb-3 border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                                             <span className="font-semibold">Alleen lezen</span> &mdash; Je begeleider heeft chat uitgeschakeld. Je kunt berichten lezen maar niet versturen.
                                         </div>
                                     )}
                                     {selectedFilePreview && (
-                                        <div className="mb-3 flex items-start justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
+                                        <div className="mb-3 flex items-start justify-between gap-3 border border-gray-200 bg-gray-50 p-3">
                                             <div className="flex items-center gap-3">
                                                 <img
                                                     src={selectedFilePreview}
                                                     alt="Voorvertoning"
-                                                    className="h-16 w-16 rounded-lg object-cover"
+                                                    className="h-16 w-16 rounded-none object-cover"
                                                 />
                                                 <div>
                                                     <p className="text-sm font-medium text-gray-900">Foto klaar om te versturen</p>
@@ -608,14 +694,14 @@ export default function ChatPage() {
                                             <button
                                                 type="button"
                                                 onClick={clearSelectedFile}
-                                                className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-gray-700 ring-1 ring-gray-200 hover:bg-gray-100"
+                                                className="rounded-none bg-white px-3 py-1.5 text-xs font-medium text-gray-700 ring-1 ring-gray-200 hover:bg-gray-100"
                                             >
                                                 Verwijderen
                                             </button>
                                         </div>
                                     )}
                                     <div className="flex items-end gap-3">
-                                        <label className={`flex h-[52px] w-[52px] items-center justify-center rounded-xl border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 ${chatEnabled ? "cursor-pointer" : "cursor-not-allowed opacity-40"}`}>
+                                        <label className={`flex h-[52px] w-[52px] items-center justify-center rounded-none border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 ${chatEnabled ? "cursor-pointer" : "cursor-not-allowed opacity-40"}`}>
                                             <input
                                                 type="file"
                                                 accept="image/*"
@@ -651,13 +737,13 @@ export default function ChatPage() {
                                             rows={3}
                                             placeholder={!chatEnabled ? "Chat uitgeschakeld door begeleider" : selectedContact ? "Typ je bericht..." : "Kies eerst een contact"}
                                             disabled={!selectedContact || isSending || !chatEnabled}
-                                            className="min-h-[88px] flex-1 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black disabled:bg-gray-100"
+                                            className="min-h-[88px] flex-1 rounded-none border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black disabled:bg-gray-100"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => void handleSend()}
                                             disabled={!selectedContact || (!draft.trim() && !selectedFile) || isSending || !chatEnabled}
-                                            className="rounded-xl bg-black px-5 py-3 text-sm font-medium text-white hover:bg-gray-900 disabled:opacity-60"
+                                            className="rounded-none bg-black px-5 py-3 text-sm font-medium text-white hover:bg-gray-900 disabled:opacity-60"
                                         >
                                             {isSending ? "Versturen..." : "Verstuur"}
                                         </button>

@@ -68,7 +68,46 @@ export async function GET() {
             };
         });
 
-        const groupedContacts = groupContactsByCategory(contacts);
+        const dedupedPayloadMap = new Map<string, (typeof payload)[number]>();
+
+        for (const item of payload) {
+            const key = item.email?.trim().toLowerCase() || `id:${item.id}`;
+            const existing = dedupedPayloadMap.get(key);
+
+            if (!existing) {
+                dedupedPayloadMap.set(key, item);
+                continue;
+            }
+
+            const existingHasChat = Boolean(existing.lastMessageAt || existing.lastMessage);
+            const currentHasChat = Boolean(item.lastMessageAt || item.lastMessage);
+
+            if (currentHasChat && !existingHasChat) {
+                dedupedPayloadMap.set(key, item);
+                continue;
+            }
+
+            if (currentHasChat && existingHasChat) {
+                const existingTs = Date.parse(existing.lastMessageAt ?? "") || 0;
+                const currentTs = Date.parse(item.lastMessageAt ?? "") || 0;
+                if (currentTs > existingTs) {
+                    dedupedPayloadMap.set(key, item);
+                    continue;
+                }
+            }
+
+            if (item.unreadCount > existing.unreadCount) {
+                dedupedPayloadMap.set(key, item);
+            }
+        }
+
+        const dedupedPayload = Array.from(dedupedPayloadMap.values());
+
+        const groupedContacts = groupContactsByCategory(
+            contacts.filter((contact) =>
+                dedupedPayload.some((item) => item.id === contact.id),
+            ),
+        );
 
         return NextResponse.json({
             currentUser: {
@@ -78,14 +117,14 @@ export async function GET() {
                 role: context.currentUser.type,
             },
             unreadTotal: Array.from(unreadCountByContact.values()).reduce((total, count) => total + count, 0),
-            contacts: payload,
+            contacts: dedupedPayload,
             categories: {
-                admins: payload.filter((item) => groupedContacts.admins.some((contact) => contact.id === item.id)),
-                entrepreneurs: payload.filter((item) =>
+                admins: dedupedPayload.filter((item) => groupedContacts.admins.some((contact) => contact.id === item.id)),
+                entrepreneurs: dedupedPayload.filter((item) =>
                     groupedContacts.entrepreneurs.some((contact) => contact.id === item.id),
                 ),
-                artists: payload.filter((item) => groupedContacts.artists.some((contact) => contact.id === item.id)),
-                accompanists: payload.filter((item) =>
+                artists: dedupedPayload.filter((item) => groupedContacts.artists.some((contact) => contact.id === item.id)),
+                accompanists: dedupedPayload.filter((item) =>
                     groupedContacts.accompanists.some((contact) => contact.id === item.id),
                 ),
             },

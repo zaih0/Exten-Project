@@ -24,7 +24,19 @@ export async function GET() {
             return NextResponse.json({ error: error.message, unreadTotal: 0 }, { status: 500 });
         }
 
-        return NextResponse.json({ unreadTotal: count ?? 0 });
+        const { data: latestUnread } = await context.supabase
+            .from("chat")
+            .select("sender_id")
+            .eq("receiver_id", context.currentUser.id)
+            .is("read_date", null)
+            .order("sent_date", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        return NextResponse.json({
+            unreadTotal: count ?? 0,
+            unreadContactId: latestUnread?.sender_id ? Number(latestUnread.sender_id) : null,
+        });
     } catch (error) {
         console.error("Chat unread GET error", error);
         return NextResponse.json(

@@ -94,12 +94,12 @@ export const SITE_CONTENT_DEFAULTS: SiteContent = {
     },
     theme: {
         backgroundColor: "#ffffff",
-        foregroundColor: "#171717",
-        primaryColor: "#7c3aed",
-        accentColor: "#f59e0b",
-        buttonTextColor: "#111827",
+        foregroundColor: "#111111",
+        primaryColor: "#111111",
+        accentColor: "#2563eb",
+        buttonTextColor: "#ffffff",
         cardColor: "#ffffff",
-        radius: "16",
+        radius: "0",
     },
 };
 

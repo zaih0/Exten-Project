@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useFollowSummary from "src/app/components/profile/useFollowSummary";
 import useCurrentUserProfile from "src/app/components/profile/useCurrentUserProfile";
 import { createClient } from "src/utils/supabase/client";
@@ -30,6 +30,7 @@ export default function ArtistProfile() {
     const [profileUsername, setProfileUsername] = useState("");
     const [aboutMe, setAboutMe] = useState("Over mij...");
     const [profilePic, setProfilePic] = useState("");
+    const [bannerUrl, setBannerUrl] = useState("");
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isUploadOpen, setIsUploadOpen] = useState(false);
     const [editUsername, setEditUsername] = useState("");
@@ -38,12 +39,14 @@ export default function ArtistProfile() {
     const [uploadFile, setUploadFile] = useState<File | null>(null);
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [isUploadingPicture, setIsUploadingPicture] = useState(false);
+    const [isUploadingBanner, setIsUploadingBanner] = useState(false);
     const [profileMessage, setProfileMessage] = useState<string | null>(null);
     const [profileError, setProfileError] = useState<string | null>(null);
     const [feedbackItems, setFeedbackItems] = useState<ArtistFeedback[]>([]);
     const [isLoadingFeedback, setIsLoadingFeedback] = useState(true);
     const [feedbackError, setFeedbackError] = useState<string | null>(null);
     const [currentEmail, setCurrentEmail] = useState<string | undefined>(undefined);
+    const bannerInputRef = useRef<HTMLInputElement | null>(null);
     const { followerCount, followingCount } = useFollowSummary({ targetEmail: currentEmail });
 
     const openEdit = () => {
@@ -97,7 +100,7 @@ export default function ArtistProfile() {
                 try {
                     return JSON.parse(responseText) as {
                         error?: string;
-                        profile?: { username?: string; about_me?: string; profile_pic?: string };
+                        profile?: { username?: string; about_me?: string; profile_pic?: string; banner_url?: string };
                     };
                 } catch {
                     return null;
@@ -109,6 +112,7 @@ export default function ArtistProfile() {
             setProfileUsername(result.profile.username ?? username ?? "Gebruiker");
             setAboutMe(result.profile.about_me ?? "Over mij...");
             setProfilePic(result.profile.profile_pic ?? "");
+            setBannerUrl(result.profile.banner_url ?? "");
         };
 
         void loadProfile();
@@ -229,6 +233,50 @@ export default function ArtistProfile() {
         setUploadFile(null);
     };
 
+    const handleUploadBanner = async (file: File) => {
+        setIsUploadingBanner(true);
+        setProfileError(null);
+
+        const supabase = createClient();
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user?.email) {
+            setProfileError("Je bent niet ingelogd.");
+            setIsUploadingBanner(false);
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("email", user.email);
+
+        const response = await fetch("/api/profile/banner", {
+            method: "POST",
+            body: formData,
+        });
+
+        const responseText = await response.text();
+        const result = (() => {
+            try {
+                return JSON.parse(responseText) as { error?: string; imageUrl?: string };
+            } catch {
+                return null;
+            }
+        })();
+
+        if (!response.ok || !result?.imageUrl) {
+            setProfileError(result?.error ?? "Uploaden banner mislukt.");
+            setIsUploadingBanner(false);
+            return;
+        }
+
+        setBannerUrl(result.imageUrl);
+        setProfileMessage("Banner bijgewerkt.");
+        setIsUploadingBanner(false);
+    };
+
     useEffect(() => {
         let isMounted = true;
 
@@ -341,21 +389,52 @@ export default function ArtistProfile() {
         className="flex flex-col min-h-screen items-center justify-center font-sans text-zinc-900"
         style={{
             backgroundImage:
-            "radial-gradient(circle at 12% 18%, rgba(232, 121, 249, 0.34) 0%, rgba(196, 181, 253, 0.20) 30%, rgba(255,255,255,0) 62%), radial-gradient(circle at 86% 12%, rgba(168, 85, 247, 0.34) 0%, rgba(129, 140, 248, 0.18) 34%, rgba(255,255,255,0) 62%), radial-gradient(circle at 50% 92%, rgba(217, 70, 239, 0.26) 0%, rgba(139, 92, 246, 0.14) 38%, rgba(255,255,255,0) 68%), linear-gradient(135deg, rgba(250, 245, 255, 1) 0%, rgba(237, 233, 254, 1) 38%, rgba(243, 232, 255, 1) 68%, rgba(253, 242, 248, 1) 100%)",
+            "radial-gradient(circle at 12% 18%, rgba(24, 24, 27, 0.10) 0%, rgba(63, 63, 70, 0.07) 30%, rgba(255,255,255,0) 62%), radial-gradient(circle at 86% 12%, rgba(39, 39, 42, 0.09) 0%, rgba(82, 82, 91, 0.06) 34%, rgba(255,255,255,0) 62%), radial-gradient(circle at 50% 92%, rgba(63, 63, 70, 0.07) 0%, rgba(113, 113, 122, 0.05) 38%, rgba(255,255,255,0) 68%), linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(250, 250, 250, 1) 40%, rgba(245, 245, 245, 1) 100%)",
         }}
         >
 
         <div className="w-full max-w-5xl lg:max-w-6xl mx-auto p-4 md:p-8">
             {/* Header Section */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
-                <div className="h-32 md:h-48 w-full" style={{
-                    "backgroundImage": "linear-gradient(to right, rgb(206, 177, 240), rgb(229, 198, 238))"
-                }}></div>
+            <div className="bg-white rounded-none shadow-sm border border-gray-100 overflow-hidden mb-8">
+                <div className="h-32 md:h-48 w-full relative overflow-hidden" style={{
+                    "backgroundImage": "linear-gradient(to right, rgb(24, 24, 27), rgb(63, 63, 70))"
+                }}>
+                    {bannerUrl && (
+                        <img
+                            src={bannerUrl}
+                            alt="Profielbanner"
+                            className="h-full w-full object-cover"
+                            onError={() => setBannerUrl("")}
+                        />
+                    )}
+                    <div className="absolute right-3 top-3">
+                        <input
+                            ref={bannerInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="sr-only"
+                            onChange={(event) => {
+                                const file = event.target.files?.[0];
+                                if (!file) return;
+                                void handleUploadBanner(file);
+                                event.currentTarget.value = "";
+                            }}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => bannerInputRef.current?.click()}
+                            disabled={isUploadingBanner}
+                            className="rounded-none bg-black/80 px-3 py-1.5 text-xs font-semibold text-white hover:bg-black disabled:opacity-60"
+                        >
+                            {isUploadingBanner ? "Uploaden..." : "Banner wijzigen"}
+                        </button>
+                    </div>
+                </div>
                 
                 <div className="px-6 pb-6 relative">
                     <div className="flex flex-col md:flex-row items-center md:items-end gap-6 -mt-16 md:-mt-20 mb-4">
                         
-                        <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100 shrink-0">
+                        <div className="w-32 h-32 md:w-40 md:h-40 rounded-none border-4 border-white shadow-md overflow-hidden bg-gray-100 shrink-0">
                             <img 
                                 className="w-full h-full object-cover" 
                                 src={profilePic || "/profileImage.jpg"}
@@ -366,38 +445,38 @@ export default function ArtistProfile() {
                         <div className="grow text-center md:text-left">
                             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{profileUsername || username}</h1>
                             <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-sm text-gray-600 md:justify-start">
-                                <span className="rounded-full bg-gray-100 px-3 py-1 font-medium text-gray-700">
+                                <span className="rounded-none bg-gray-100 px-3 py-1 font-medium text-gray-700">
                                     {followerCount} volgers
                                 </span>
-                                <span className="rounded-full bg-gray-100 px-3 py-1 font-medium text-gray-700">
+                                <span className="rounded-none bg-gray-100 px-3 py-1 font-medium text-gray-700">
                                     {followingCount} gevolgd
                                 </span>
                             </div>
                         </div>
                         
-                        <div className="flex gap-3 mt-4 md:mt-0">
+                        <div className="mt-4 grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:mt-0 lg:flex lg:w-auto lg:flex-wrap lg:justify-end lg:gap-3">
                             <button
                                 type="button"
                                 onClick={openEdit}
-                                className="px-6 py-2 bg-gray-100 text-gray-700 font-medium rounded-full hover:bg-gray-200 transition"
+                                className="min-w-[150px] px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-none hover:bg-gray-200 transition text-center"
                             >
                                 Wijzig Profiel
                             </button>
                             <Link
                                 href="/chat"
-                                className="px-6 py-2 bg-black text-white font-medium rounded-full hover:bg-gray-900 transition"
+                                className="min-w-[150px] px-4 py-2 bg-black text-white font-medium rounded-none hover:bg-gray-900 transition text-center"
                             >
                                 Chat hub
                             </Link>
                             <Link
                                 href="/profile/pickups"
-                                className="px-6 py-2 bg-amber-100 text-amber-800 font-medium rounded-full hover:bg-amber-200 transition"
+                                className="min-w-[150px] px-4 py-2 bg-amber-100 text-amber-800 font-medium rounded-none hover:bg-amber-200 transition text-center"
                             >
                                 Pickup systeem
                             </Link>
                             <Link
                                 href="/profile/artist/edit"
-                                className="px-6 py-2 bg-violet-600 text-white font-medium rounded-full hover:bg-violet-700 transition"
+                                className="min-w-[150px] px-4 py-2 bg-black text-white font-medium rounded-none hover:bg-gray-900 transition text-center"
                             >
                                 Kunstwerken bewerken
                             </Link>
@@ -415,7 +494,7 @@ export default function ArtistProfile() {
             </div>
 
             <div>
-                <div className="mb-10 rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">
+                <div className="mb-10 rounded-none border border-gray-200 bg-white p-5 shadow-sm">
                     <div className="flex flex-col gap-1">
                         <h2 className="text-xl font-bold text-zinc-900">Feedback van je begeleider</h2>
                         <p className="text-sm text-zinc-600">
@@ -424,21 +503,21 @@ export default function ArtistProfile() {
                     </div>
 
                     {isLoadingFeedback ? (
-                        <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700">
+                        <div className="mt-4 border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
                             Feedback laden...
                         </div>
                     ) : feedbackError ? (
-                        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                        <div className="mt-4 border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                             {feedbackError}
                         </div>
                     ) : feedbackItems.length === 0 ? (
-                        <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                        <div className="mt-4 border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
                             Je hebt nog geen feedback ontvangen.
                         </div>
                     ) : (
                         <div className="mt-4 space-y-3">
                             {feedbackItems.map((item) => (
-                                <div key={item.id} className="rounded-xl border border-violet-100 bg-violet-50/40 px-4 py-3 shadow-sm">
+                                <div key={item.id} className="border border-gray-200 bg-gray-50/40 px-4 py-3 shadow-sm">
                                     <div className="flex items-center justify-between gap-3">
                                         <p className="text-sm font-semibold text-zinc-900">{item.authorName}</p>
                                         <p className="text-xs text-zinc-500">
@@ -453,15 +532,15 @@ export default function ArtistProfile() {
                 </div>
 
                 {isLoadingArtworks ? (
-                    <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700">
+                    <div className="border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
                         Kunstwerken laden...
                     </div>
                 ) : artworksError ? (
-                    <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                    <div className="border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                         {artworksError}
                     </div>
                 ) : artworks.length === 0 ? (
-                    <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                    <div className="border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
                         Nog geen kunstwerken. Voeg een kunstwerk toe via Wijzig Profiel.
                     </div>
                 ) : (
@@ -469,7 +548,7 @@ export default function ArtistProfile() {
                         {artworks.map((artwork) => (
                             <div
                                 key={artwork.id}
-                                className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition group cursor-pointer overflow-hidden"
+                                className="bg-white border border-gray-100 shadow-sm hover:shadow-md transition group cursor-pointer overflow-hidden"
                             >
                                 <div className="relative h-40 md:h-44 w-full overflow-hidden">
                                     <img
@@ -504,11 +583,11 @@ export default function ArtistProfile() {
                     if (event.target === event.currentTarget) setIsEditOpen(false);
                 }}
             >
-                <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+                <div className="w-full max-w-lg rounded-none bg-white p-6 shadow-2xl">
                     <h2 className="text-lg font-bold text-gray-900">Profiel bewerken</h2>
 
                     {(profileError || profileMessage) && (
-                        <p className={`mt-3 rounded-lg px-3 py-2 text-sm ${profileError ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>
+                        <p className={`mt-3 rounded-none px-3 py-2 text-sm ${profileError ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>
                             {profileError ?? profileMessage}
                         </p>
                     )}
@@ -517,12 +596,12 @@ export default function ArtistProfile() {
                         <img
                             src={editProfilePic || profilePic || "/profileImage.jpg"}
                             alt="Profielfoto"
-                            className="h-16 w-16 rounded-full object-cover ring-1 ring-gray-200"
+                            className="h-16 w-16 rounded-none object-cover ring-1 ring-gray-200"
                         />
                         <button
                             type="button"
                             onClick={() => setIsUploadOpen(true)}
-                            className="rounded-full bg-violet-100 px-4 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-200"
+                            className="rounded-none bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200"
                         >
                             Upload profielfoto
                         </button>
@@ -534,7 +613,7 @@ export default function ArtistProfile() {
                             type="text"
                             value={editUsername}
                             onChange={(event) => setEditUsername(event.target.value)}
-                            className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900 outline-none ring-violet-300 focus:ring"
+                            className="border border-gray-200 px-4 py-2 text-gray-900 outline-none ring-gray-300 focus:ring"
                         />
                     </label>
 
@@ -544,7 +623,7 @@ export default function ArtistProfile() {
                             value={editAboutMe}
                             onChange={(event) => setEditAboutMe(event.target.value)}
                             rows={4}
-                            className="rounded-xl border border-gray-200 px-4 py-3 text-gray-900 outline-none ring-violet-300 focus:ring"
+                            className="border border-gray-200 px-4 py-3 text-gray-900 outline-none ring-gray-300 focus:ring"
                         />
                     </label>
 
@@ -552,7 +631,7 @@ export default function ArtistProfile() {
                         <button
                             type="button"
                             onClick={() => setIsEditOpen(false)}
-                            className="rounded-full bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200"
+                            className="rounded-none bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200"
                         >
                             Annuleren
                         </button>
@@ -560,7 +639,7 @@ export default function ArtistProfile() {
                             type="button"
                             onClick={() => void handleSaveProfile()}
                             disabled={isSavingProfile}
-                            className="rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-60"
+                            className="rounded-none bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-gray-900 disabled:opacity-60"
                         >
                             {isSavingProfile ? "Opslaan..." : "Opslaan"}
                         </button>
@@ -576,19 +655,19 @@ export default function ArtistProfile() {
                     if (event.target === event.currentTarget) setIsUploadOpen(false);
                 }}
             >
-                <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                <div className="w-full max-w-md rounded-none bg-white p-6 shadow-2xl">
                     <h3 className="text-lg font-bold text-gray-900">Profielfoto uploaden</h3>
                     <input
                         type="file"
                         accept="image/*"
                         onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)}
-                        className="mt-4 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                        className="mt-4 w-full rounded-none border border-gray-200 px-3 py-2 text-sm"
                     />
                     <div className="mt-5 flex justify-end gap-2">
                         <button
                             type="button"
                             onClick={() => setIsUploadOpen(false)}
-                            className="rounded-full bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200"
+                            className="rounded-none bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200"
                         >
                             Sluiten
                         </button>
@@ -596,7 +675,7 @@ export default function ArtistProfile() {
                             type="button"
                             onClick={() => void handleUploadPicture()}
                             disabled={isUploadingPicture || !uploadFile}
-                            className="rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-60"
+                            className="rounded-none bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-gray-900 disabled:opacity-60"
                         >
                             {isUploadingPicture ? "Uploaden..." : "Upload"}
                         </button>
@@ -621,7 +700,7 @@ export default function ArtistProfile() {
                 <img
                     src={expandedImage}
                     alt="Vergroot kunstwerk"
-                    className="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl"
+                    className="max-h-[90vh] max-w-[90vw] rounded-none shadow-2xl"
                     onClick={(event) => event.stopPropagation()}
                 />
             </div>

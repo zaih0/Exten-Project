@@ -133,6 +133,12 @@ export default function AdminPage() {
     const [isResettingPassword, setIsResettingPassword] = useState(false);
     const [passwordResetError, setPasswordResetError] = useState<string | null>(null);
     const [passwordResetMessage, setPasswordResetMessage] = useState<string | null>(null);
+    const [newAdminEmail, setNewAdminEmail] = useState("");
+    const [newAdminDisplayName, setNewAdminDisplayName] = useState("");
+    const [newAdminPassword, setNewAdminPassword] = useState("");
+    const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
+    const [adminCreateError, setAdminCreateError] = useState<string | null>(null);
+    const [adminCreateMessage, setAdminCreateMessage] = useState<string | null>(null);
     const [passwordChangeLogs, setPasswordChangeLogs] = useState<PasswordChangeLog[]>([]);
     const [isLoadingPasswordLogs, setIsLoadingPasswordLogs] = useState(true);
     const [currentAdminEmail, setCurrentAdminEmail] = useState<string | null>(null);
@@ -684,6 +690,55 @@ export default function AdminPage() {
         setIsResettingPassword(false);
     };
 
+    const handleCreateAdminAccount = async () => {
+        const email = newAdminEmail.trim().toLowerCase();
+
+        if (!email) {
+            setAdminCreateError("Vul een e-mailadres in.");
+            return;
+        }
+
+        if (newAdminPassword.length < 8) {
+            setAdminCreateError("Wachtwoord moet minimaal 8 tekens bevatten.");
+            return;
+        }
+
+        setIsCreatingAdmin(true);
+        setAdminCreateError(null);
+        setAdminCreateMessage(null);
+
+        const response = await fetch("/api/admin/users/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email,
+                password: newAdminPassword,
+                displayName: newAdminDisplayName,
+            }),
+        });
+
+        const responseText = await response.text();
+        const result = (() => {
+            try {
+                return JSON.parse(responseText) as { error?: string; message?: string };
+            } catch {
+                return null;
+            }
+        })();
+
+        if (!response.ok) {
+            setAdminCreateError(result?.error ?? "Adminaccount aanmaken mislukt.");
+            setIsCreatingAdmin(false);
+            return;
+        }
+
+        setAdminCreateMessage(result?.message ?? "Adminaccount aangemaakt.");
+        setNewAdminEmail("");
+        setNewAdminDisplayName("");
+        setNewAdminPassword("");
+        setIsCreatingAdmin(false);
+    };
+
     const openEditArtwork = (artwork: AdminArtwork) => {
         setEditingArtwork(artwork);
         setEditTitle(artwork.title);
@@ -847,7 +902,7 @@ export default function AdminPage() {
 
     if (authStatus === "checking") {
         return (
-            <div className="min-h-screen flex items-center justify-center px-6 py-8" style={{ backgroundColor: "#faf5ff" }}>
+            <div className="kk-admin-theme min-h-screen flex items-center justify-center px-6 py-8" style={{ backgroundColor: "#f4f4f5" }}>
                 <div className="w-full max-w-md rounded-3xl border border-purple-200/70 bg-white p-8 shadow-xl shadow-purple-500/10">
                     <p className="text-sm font-medium text-purple-700">Admin omgeving laden...</p>
                 </div>
@@ -857,7 +912,7 @@ export default function AdminPage() {
 
     if (authStatus !== "authenticated") {
         return (
-            <div className="min-h-screen flex items-center justify-center px-6 py-8" style={{ backgroundColor: "#faf5ff" }}>
+            <div className="kk-admin-theme min-h-screen flex items-center justify-center px-6 py-8" style={{ backgroundColor: "#f4f4f5" }}>
                 <div className="w-full max-w-md rounded-3xl border border-purple-200/70 bg-white p-8 shadow-xl shadow-purple-500/10">
                     <div className="mb-6">
                         <h1 className="text-2xl font-bold text-zinc-900">Admin login</h1>
@@ -908,7 +963,7 @@ export default function AdminPage() {
 
     return (
         <div
-            className="min-h-screen px-6 py-8 font-sans"
+            className="kk-admin-theme min-h-screen px-6 py-8 font-sans"
             style={{
                 backgroundImage:
                     "radial-gradient(circle at 12% 18%, rgba(232, 121, 249, 0.34) 0%, rgba(196, 181, 253, 0.20) 30%, rgba(255,255,255,0) 62%), radial-gradient(circle at 86% 12%, rgba(168, 85, 247, 0.34) 0%, rgba(129, 140, 248, 0.18) 34%, rgba(255,255,255,0) 62%), radial-gradient(circle at 50% 92%, rgba(217, 70, 239, 0.26) 0%, rgba(139, 92, 246, 0.14) 38%, rgba(255,255,255,0) 68%), linear-gradient(135deg, rgba(250, 245, 255, 1) 0%, rgba(237, 233, 254, 1) 38%, rgba(243, 232, 255, 1) 68%, rgba(253, 242, 248, 1) 100%)",
@@ -1681,9 +1736,60 @@ export default function AdminPage() {
                     </div>
                 </div>
 
+                <div className="mb-6 rounded-xl border border-emerald-200/60 bg-white/90 p-4 shadow-sm">
+                    <div className="flex flex-col gap-1">
+                        <h2 className="text-sm font-semibold text-zinc-900">Nieuwe admin aanmaken</h2>
+                        <p className="text-xs text-zinc-600">
+                            Geef iemand admin-toegang zonder code of database handmatig te bewerken.
+                        </p>
+                    </div>
+
+                    {(adminCreateError || adminCreateMessage) && (
+                        <p
+                            className={`mt-3 rounded-lg px-3 py-2 text-sm ${
+                                adminCreateError ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"
+                            }`}
+                        >
+                            {adminCreateError ?? adminCreateMessage}
+                        </p>
+                    )}
+
+                    <div className="mt-3 grid gap-2 md:grid-cols-4">
+                        <input
+                            type="email"
+                            value={newAdminEmail}
+                            onChange={(event) => setNewAdminEmail(event.target.value)}
+                            placeholder="admin@voorbeeld.nl"
+                            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                        />
+                        <input
+                            type="text"
+                            value={newAdminDisplayName}
+                            onChange={(event) => setNewAdminDisplayName(event.target.value)}
+                            placeholder="Weergavenaam (optioneel)"
+                            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                        />
+                        <input
+                            type="password"
+                            value={newAdminPassword}
+                            onChange={(event) => setNewAdminPassword(event.target.value)}
+                            placeholder="Wachtwoord (min. 8 tekens)"
+                            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => void handleCreateAdminAccount()}
+                            disabled={isCreatingAdmin}
+                            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                        >
+                            {isCreatingAdmin ? "Aanmaken..." : "Admin aanmaken"}
+                        </button>
+                    </div>
+                </div>
+
                 <div className="flex gap-6">
                     <aside className="w-64 rounded-xl border border-purple-200/35 bg-white/75 p-4 backdrop-blur">
-                        <div className="mb-3 text-xs font-semibold text-purple-700/80">Tabs</div>
+                        <div className="mb-3 text-xs font-semibold text-zinc-700">Tabs</div>
                         <div role="tablist" className="flex flex-col gap-2">
                             {adminTabs.map((tab) => {
                                 const isActive = tab.key === activeTab;
@@ -1705,13 +1811,17 @@ export default function AdminPage() {
                                         onClick={() => setActiveTab(tab.key)}
                                         className={
                                             isActive
-                                                ? "flex items-center justify-between rounded-lg bg-gradient-to-r from-purple-600 to-fuchsia-600 px-3 py-2 text-left text-sm font-semibold text-white shadow-md"
-                                                : "flex items-center justify-between rounded-lg bg-white/60 px-3 py-2 text-left text-sm font-semibold text-purple-900/80 ring-1 ring-purple-200/70 hover:bg-white/80 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                                                ? "flex items-center justify-between rounded-lg border border-zinc-900 bg-zinc-900 px-3 py-2 text-left text-sm font-semibold text-white shadow-sm"
+                                                : "flex items-center justify-between rounded-lg bg-white/60 px-3 py-2 text-left text-sm font-semibold text-zinc-800 ring-1 ring-zinc-300 hover:bg-white/80 focus:outline-none focus:ring-2 focus:ring-zinc-400"
                                         }
                                     >
                                         <span>{tab.label}</span>
                                         {badgeCount !== null && badgeCount > 0 && (
-                                            <span className="rounded-full bg-white/90 px-2 py-0.5 text-xs font-bold text-purple-700">
+                                            <span
+                                                className={`rounded-full px-2 py-0.5 text-xs font-bold ${
+                                                    isActive ? "bg-zinc-100 text-zinc-900" : "bg-zinc-200 text-zinc-800"
+                                                }`}
+                                            >
                                                 {badgeCount}
                                             </span>
                                         )}
@@ -1971,8 +2081,8 @@ export default function AdminPage() {
                                                 Er zijn nog geen geregistreerde gebruikers.
                                             </div>
                                         ) : (
-                                            allUsers.map((user) => {
-                                                const userKey = user.email ?? String(user.id);
+                                            allUsers.map((user, index) => {
+                                                const userKey = `${String(user.id)}-${user.email ?? "no-email"}-${index}`;
                                                 const isBlocked = user.blocked_status;
                                                 const isProcessingBlock = processingBlockEmail === user.email;
 
@@ -2084,8 +2194,11 @@ export default function AdminPage() {
                                                     <option value="">Selecteer een gebruiker</option>
                                                     {allUsers
                                                         .filter((user) => Boolean(user.email))
-                                                        .map((user) => (
-                                                            <option key={user.email ?? String(user.id)} value={user.email ?? ""}>
+                                                        .map((user, index) => (
+                                                            <option
+                                                                key={`${String(user.id)}-${user.email ?? "no-email"}-${index}`}
+                                                                value={user.email ?? ""}
+                                                            >
                                                                 {user.username || user.email} {user.email ? `(${user.email})` : ""}
                                                             </option>
                                                         ))}

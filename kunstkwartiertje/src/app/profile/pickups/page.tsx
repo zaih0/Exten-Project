@@ -167,7 +167,7 @@ export default function PickupSystemPage() {
 
     return (
         <div className="min-h-screen bg-zinc-50 p-4 md:p-8">
-            <div className="mx-auto w-full max-w-6xl rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm md:p-8">
+            <div className="mx-auto w-full max-w-6xl rounded-none border border-zinc-200 bg-white p-5 shadow-sm md:p-8">
                 <div className="mb-6">
                     <h1 className="text-2xl font-bold text-zinc-900">Pickup systeem</h1>
                     <p className="mt-1 text-sm text-zinc-600">
@@ -179,7 +179,7 @@ export default function PickupSystemPage() {
 
                 {(error || message) && (
                     <div
-                        className={`mb-4 rounded-lg px-4 py-3 text-sm ${
+                        className={`mb-4 rounded-none px-4 py-3 text-sm ${
                             error ? "border border-rose-200 bg-rose-50 text-rose-700" : "border border-emerald-200 bg-emerald-50 text-emerald-700"
                         }`}
                     >
@@ -188,17 +188,17 @@ export default function PickupSystemPage() {
                 )}
 
                 {isLoading ? (
-                    <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700">
+                    <div className="rounded-none border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
                         Pickup data laden...
                     </div>
                 ) : !hasItems ? (
-                    <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+                    <div className="rounded-none border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
                         Nog geen pickup items beschikbaar.
                     </div>
                 ) : isArtistView ? (
                     <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                         {artistItems.map((item) => (
-                            <article key={`${item.artId}-${item.entrepreneurName}`} className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+                            <article key={`${item.artId}-${item.entrepreneurName}`} className="overflow-hidden rounded-none border border-zinc-200 bg-white shadow-sm">
                                 <div className="h-52 w-full bg-zinc-100">
                                     <img src={item.artworkImageUrl || "/Schilderij1.png"} alt={item.artworkTitle} className="h-full w-full object-cover" />
                                 </div>
@@ -213,7 +213,7 @@ export default function PickupSystemPage() {
                                         <p className="mt-1 text-xs text-zinc-500">Opgehaald op: {new Date(item.pickedUpAt).toLocaleString("nl-NL")}</p>
                                     )}
                                     {(item.locationName || item.locationAddress) && (
-                                        <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+                                        <div className="mt-3 rounded-none border border-zinc-200 bg-zinc-50 p-3">
                                             <p className="text-sm font-medium text-zinc-800">Locatie</p>
                                             <p className="text-sm text-zinc-700">{item.locationName || "Externe locatie"}</p>
                                             {item.locationAddress && (
@@ -221,7 +221,7 @@ export default function PickupSystemPage() {
                                                     <p className="mt-1 text-xs text-zinc-500">{item.locationAddress}</p>
                                                     <iframe
                                                         title={`map-${item.artId}`}
-                                                        className="mt-2 h-40 w-full rounded-md border border-zinc-200"
+                                                        className="mt-2 h-40 w-full rounded-none border border-zinc-200"
                                                         loading="lazy"
                                                         src={`https://maps.google.com/maps?q=${encodeURIComponent(item.locationAddress)}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
                                                     />
@@ -239,7 +239,7 @@ export default function PickupSystemPage() {
                             const location = locationInputs[item.id] ?? { name: "", address: "" };
 
                             return (
-                                <article key={item.id} className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+                                <article key={item.id} className="overflow-hidden rounded-none border border-zinc-200 bg-white shadow-sm">
                                     <div className="h-52 w-full bg-zinc-100">
                                         <img src={item.imageUrl || "/Schilderij1.png"} alt={item.title} className="h-full w-full object-cover" />
                                     </div>
@@ -265,7 +265,7 @@ export default function PickupSystemPage() {
                                                     }))
                                                 }
                                                 placeholder="Locatienaam (bv. Bibliotheek Centrum)"
-                                                className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-600 focus:placeholder:text-transparent"
+                                                className="rounded-none border border-zinc-300 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-600 focus:placeholder:text-transparent"
                                             />
                                             <input
                                                 type="text"
@@ -280,7 +280,7 @@ export default function PickupSystemPage() {
                                                     }))
                                                 }
                                                 placeholder="Adres voor kaartweergave"
-                                                className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-600 focus:placeholder:text-transparent"
+                                                className="rounded-none border border-zinc-300 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-600 focus:placeholder:text-transparent"
                                             />
                                         </div>
 
@@ -288,7 +288,7 @@ export default function PickupSystemPage() {
                                             type="button"
                                             disabled={busyArtId === item.id || item.pickupStatus === "picked_up"}
                                             onClick={() => void handleMarkPickedUp(item.id)}
-                                            className="mt-3 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-400"
+                                            className="mt-3 rounded-none bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-400"
                                         >
                                             {item.pickupStatus === "picked_up"
                                                 ? "Al opgehaald"
@@ -298,13 +298,13 @@ export default function PickupSystemPage() {
                                         </button>
 
                                         {(item.locationName || item.locationAddress) && (
-                                            <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+                                            <div className="mt-3 rounded-none border border-zinc-200 bg-zinc-50 p-3">
                                                 <p className="text-sm font-medium text-zinc-800">Huidige locatie</p>
                                                 <p className="text-sm text-zinc-700">{item.locationName || "Externe locatie"}</p>
                                                 {item.locationAddress && (
                                                     <iframe
                                                         title={`map-entrepreneur-${item.id}`}
-                                                        className="mt-2 h-40 w-full rounded-md border border-zinc-200"
+                                                        className="mt-2 h-40 w-full rounded-none border border-zinc-200"
                                                         loading="lazy"
                                                         src={`https://maps.google.com/maps?q=${encodeURIComponent(item.locationAddress)}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
                                                     />

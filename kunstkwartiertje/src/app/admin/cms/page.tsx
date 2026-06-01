@@ -204,7 +204,7 @@ export default function AdminCmsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-zinc-50 px-4 py-8 sm:px-6 lg:px-10 text-zinc-900">
+        <div className="kk-admin-theme min-h-screen bg-zinc-50 px-4 py-8 sm:px-6 lg:px-10 text-zinc-900">
             <div className="mx-auto max-w-6xl space-y-5">
                 <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-3">

@@ -44,12 +44,17 @@ export async function GET(request: Request) {
             roleProfile = data;
         }
 
+        const { data: bannerUrlData } = supabase.storage
+            .from("profile-pictures")
+            .getPublicUrl(`banners/${user.id}/banner`);
+
         return NextResponse.json({
             profile: {
                 userId: Number(user.id),
                 username: roleProfile?.username ?? user.username ?? user.email?.split("@")[0] ?? "Gebruiker",
                 aboutMe: roleProfile?.about_me ?? "",
                 profilePic: roleProfile?.profile_pic ?? "",
+                bannerUrl: `${bannerUrlData.publicUrl}?v=${Date.now()}`,
                 role,
                 email: user.email?.trim().toLowerCase() ?? "",
                 status: user.status ?? null,

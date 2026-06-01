@@ -304,10 +304,10 @@ export default function ArtistEditPage() {
             className="flex min-h-screen items-start justify-center px-4 py-10 md:px-8"
             style={{
                 backgroundImage:
-                    "radial-gradient(circle at 12% 18%, rgba(232, 121, 249, 0.34) 0%, rgba(196, 181, 253, 0.20) 30%, rgba(255,255,255,0) 62%), radial-gradient(circle at 86% 12%, rgba(168, 85, 247, 0.34) 0%, rgba(129, 140, 248, 0.18) 34%, rgba(255,255,255,0) 62%), radial-gradient(circle at 50% 92%, rgba(217, 70, 239, 0.26) 0%, rgba(139, 92, 246, 0.14) 38%, rgba(255,255,255,0) 68%), linear-gradient(135deg, rgba(250, 245, 255, 1) 0%, rgba(237, 233, 254, 1) 38%, rgba(243, 232, 255, 1) 68%, rgba(253, 242, 248, 1) 100%)",
+                    "radial-gradient(circle at 12% 18%, rgba(24, 24, 27, 0.10) 0%, rgba(63, 63, 70, 0.07) 30%, rgba(255,255,255,0) 62%), radial-gradient(circle at 86% 12%, rgba(39, 39, 42, 0.09) 0%, rgba(82, 82, 91, 0.06) 34%, rgba(255,255,255,0) 62%), radial-gradient(circle at 50% 92%, rgba(63, 63, 70, 0.07) 0%, rgba(113, 113, 122, 0.05) 38%, rgba(255,255,255,0) 68%), linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(250, 250, 250, 1) 40%, rgba(245, 245, 245, 1) 100%)",
             }}
         >
-            <div className="w-full max-w-5xl rounded-2xl border border-gray-100 bg-white/95 p-6 shadow-sm md:p-8">
+            <div className="w-full max-w-5xl rounded-none border border-gray-100 bg-white/95 p-6 shadow-sm md:p-8">
                 <div className="mb-6 flex flex-col gap-4 border-b border-gray-100 pb-5 md:flex-row md:items-center md:justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">Kunstwerken bewerken</h1>
@@ -317,7 +317,7 @@ export default function ArtistEditPage() {
                     </div>
                     <Link
                         href="/profile/artist"
-                        className="inline-flex items-center justify-center rounded-full bg-gray-100 px-5 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200"
+                        className="inline-flex items-center justify-center rounded-none bg-gray-100 px-5 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200"
                     >
                         Terug naar profiel
                     </Link>
@@ -330,7 +330,7 @@ export default function ArtistEditPage() {
                             <button
                                 type="button"
                                 onClick={openUploadModal}
-                                className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700"
+                                className="inline-flex items-center gap-2 rounded-none bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-900"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
                                     <path d="M12 5v14M5 12h14" />
@@ -341,34 +341,34 @@ export default function ArtistEditPage() {
 
                         <div className="space-y-4">
                             {uploadMessage && (
-                                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                                <div className="rounded-none border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                                     {uploadMessage}
                                 </div>
                             )}
 
                             {isLoadingArtworks ? (
-                                <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700">
+                                <div className="rounded-none border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
                                     Kunstwerken laden...
                                 </div>
                             ) : artworksError ? (
-                                <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                                <div className="rounded-none border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                                     {artworksError}
                                 </div>
                             ) : artworks.length === 0 ? (
-                                <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                                <div className="rounded-none border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
                                     Nog geen kunstwerken gevonden. Voeg je eerste werk toe.
                                 </div>
                             ) : (
                                 artworks.map((artwork) => (
                                     <article
                                         key={artwork.id}
-                                        className="grid gap-3 rounded-xl border border-gray-200 bg-white p-4 md:grid-cols-12"
+                                        className="grid gap-3 rounded-none border border-gray-200 bg-white p-4 md:grid-cols-12"
                                     >
                                         <div className="md:col-span-3">
                                             <img
                                                 src={artwork.imageUrl}
                                                 alt={artwork.title}
-                                                className="h-28 w-full rounded-lg object-cover"
+                                                className="h-28 w-full rounded-none object-cover"
                                             />
                                         </div>
 
@@ -376,7 +376,7 @@ export default function ArtistEditPage() {
                                             <div className="flex items-center justify-between gap-3">
                                                 <span className="text-xs font-semibold text-gray-500">Moderatie status</span>
                                                 <span
-                                                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${
+                                                    className={`rounded-none px-2.5 py-1 text-[11px] font-semibold ring-1 ${
                                                         artwork.status === "approved"
                                                             ? "bg-emerald-100 text-emerald-700 ring-emerald-200"
                                                             : artwork.status === "denied"
@@ -393,7 +393,7 @@ export default function ArtistEditPage() {
                                             </div>
 
                                             {artwork.status === "denied" && artwork.denialReason && (
-                                                <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                                                <div className="rounded-none border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
                                                     Afwijsreden: {artwork.denialReason}
                                                 </div>
                                             )}
@@ -408,7 +408,7 @@ export default function ArtistEditPage() {
                                                         event.target.value,
                                                     )
                                                 }
-                                                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none ring-violet-300 focus:ring"
+                                                className="rounded-none border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none ring-gray-400 focus:ring"
                                                 placeholder="Titel"
                                                 required
                                             />
@@ -422,7 +422,7 @@ export default function ArtistEditPage() {
                                                         event.target.value,
                                                     )
                                                 }
-                                                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none ring-violet-300 focus:ring"
+                                                className="rounded-none border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none ring-gray-400 focus:ring"
                                                 placeholder="Afbeelding URL"
                                                 required
                                             />
@@ -436,7 +436,7 @@ export default function ArtistEditPage() {
                                                     )
                                                 }
                                                 rows={2}
-                                                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none ring-violet-300 focus:ring"
+                                                className="rounded-none border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none ring-gray-400 focus:ring"
                                                 placeholder="Beschrijving"
                                                 required
                                             />
@@ -455,7 +455,7 @@ export default function ArtistEditPage() {
                                                         ),
                                                     );
                                                 }}
-                                                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none ring-violet-300 focus:ring"
+                                                className="rounded-none border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none ring-gray-400 focus:ring"
                                                 placeholder="Prijs (optioneel)"
                                             />
                                         </div>
@@ -465,7 +465,7 @@ export default function ArtistEditPage() {
                                                 type="button"
                                                 onClick={() => void saveArtwork(artwork)}
                                                 disabled={savingArtworkId === artwork.id}
-                                                className="rounded-lg bg-emerald-100 px-3 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                                className="rounded-none bg-emerald-100 px-3 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-200 disabled:cursor-not-allowed disabled:opacity-60"
                                             >
                                                 {savingArtworkId === artwork.id ? "Opslaan..." : "Opslaan"}
                                             </button>
@@ -473,7 +473,7 @@ export default function ArtistEditPage() {
                                                 type="button"
                                                 onClick={() => void removeArtwork(artwork.id)}
                                                 disabled={deletingArtworkId === artwork.id}
-                                                className="rounded-lg bg-rose-100 px-3 py-2 text-sm font-medium text-rose-700 transition hover:bg-rose-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                                className="rounded-none bg-rose-100 px-3 py-2 text-sm font-medium text-rose-700 transition hover:bg-rose-200 disabled:cursor-not-allowed disabled:opacity-60"
                                             >
                                                 {deletingArtworkId === artwork.id ? "Verwijderen..." : "Verwijder"}
                                             </button>
@@ -492,14 +492,14 @@ export default function ArtistEditPage() {
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
                     onClick={(e) => { if (e.target === e.currentTarget) closeUploadModal(); }}
                 >
-                    <div className="w-full max-w-lg rounded-2xl border border-gray-100 bg-white p-6 shadow-2xl">
+                    <div className="w-full max-w-lg rounded-none border border-gray-100 bg-white p-6 shadow-2xl">
                         <div className="mb-5 flex items-center justify-between">
                             <h2 className="text-lg font-bold text-gray-900">Kunstwerk toevoegen</h2>
                             <button
                                 type="button"
                                 onClick={closeUploadModal}
                                 disabled={isUploading}
-                                className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200 disabled:opacity-50"
+                                className="flex h-8 w-8 items-center justify-center rounded-none bg-gray-100 text-gray-500 transition hover:bg-gray-200 disabled:opacity-50"
                                 aria-label="Sluiten"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
@@ -523,22 +523,22 @@ export default function ArtistEditPage() {
                                         const dropped = e.dataTransfer.files[0];
                                         if (dropped?.type.startsWith("image/")) handleFileChange(dropped);
                                     }}
-                                    className="relative flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-violet-200 bg-violet-50/40 text-center transition hover:border-violet-400 hover:bg-violet-50"
+                                    className="relative flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-none border-2 border-dashed border-gray-200 bg-gray-50 text-center transition hover:border-gray-400 hover:bg-gray-50"
                                 >
                                     {uploadPreview ? (
                                         <img
                                             src={uploadPreview}
                                             alt="Voorvertoning"
-                                            className="max-h-48 w-full rounded-xl object-contain p-1"
+                                            className="max-h-48 w-full rounded-none object-contain p-1"
                                         />
                                     ) : (
                                         <>
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mb-2 h-8 w-8 text-violet-400" aria-hidden="true">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mb-2 h-8 w-8 text-gray-400" aria-hidden="true">
                                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                                                 <polyline points="17 8 12 3 7 8" />
                                                 <line x1="12" y1="3" x2="12" y2="15" />
                                             </svg>
-                                            <p className="text-sm font-medium text-violet-600">Klik of sleep een afbeelding</p>
+                                            <p className="text-sm font-medium text-gray-900">Klik of sleep een afbeelding</p>
                                             <p className="mt-1 text-xs text-gray-400">PNG, JPG, WEBP — max 10 MB</p>
                                         </>
                                     )}
@@ -561,7 +561,7 @@ export default function ArtistEditPage() {
                                     onChange={(e) => setUploadTitle(e.target.value)}
                                     required
                                     placeholder="Naam van het kunstwerk"
-                                    className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900 outline-none ring-violet-300 focus:ring"
+                                    className="rounded-none border border-gray-200 px-4 py-2 text-gray-900 outline-none ring-gray-400 focus:ring"
                                 />
                             </label>
 
@@ -573,7 +573,7 @@ export default function ArtistEditPage() {
                                     onChange={(e) => setUploadDescription(e.target.value)}
                                     rows={3}
                                     placeholder="Vertel iets over dit werk..."
-                                    className="rounded-xl border border-gray-200 px-4 py-3 text-gray-900 outline-none ring-violet-300 focus:ring"
+                                    className="rounded-none border border-gray-200 px-4 py-3 text-gray-900 outline-none ring-gray-400 focus:ring"
                                 />
                             </label>
 
@@ -586,12 +586,12 @@ export default function ArtistEditPage() {
                                     value={uploadPrice}
                                     onChange={(e) => setUploadPrice(e.target.value)}
                                     placeholder="Bijv. 120.00"
-                                    className="rounded-xl border border-gray-200 px-4 py-2 text-gray-900 outline-none ring-violet-300 focus:ring"
+                                    className="rounded-none border border-gray-200 px-4 py-2 text-gray-900 outline-none ring-gray-400 focus:ring"
                                 />
                             </label>
 
                             {uploadError && (
-                                <p className="rounded-xl bg-rose-50 px-4 py-2.5 text-sm text-rose-600 ring-1 ring-rose-200">
+                                <p className="rounded-none bg-rose-50 px-4 py-2.5 text-sm text-rose-600 ring-1 ring-rose-200">
                                     {uploadError}
                                 </p>
                             )}
@@ -601,14 +601,14 @@ export default function ArtistEditPage() {
                                     type="button"
                                     onClick={closeUploadModal}
                                     disabled={isUploading}
-                                    className="rounded-full bg-gray-100 px-5 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-200 disabled:opacity-50"
+                                    className="rounded-none bg-gray-100 px-5 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-200 disabled:opacity-50"
                                 >
                                     Annuleren
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isUploading || !uploadFile}
-                                    className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="inline-flex items-center gap-2 rounded-none bg-black px-5 py-2 text-sm font-semibold text-white transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     {isUploading ? (
                                         <>

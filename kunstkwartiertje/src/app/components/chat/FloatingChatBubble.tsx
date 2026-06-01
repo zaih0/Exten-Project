@@ -7,6 +7,7 @@ import { createClient } from "src/utils/supabase/client";
 
 type UnreadResponse = {
     unreadTotal?: number;
+    unreadContactId?: number | null;
     error?: string;
 };
 
@@ -14,6 +15,7 @@ export default function FloatingChatBubble() {
     const pathname = usePathname();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [unreadTotal, setUnreadTotal] = useState(0);
+    const [unreadContactId, setUnreadContactId] = useState<number | null>(null);
 
     useEffect(() => {
         let isMounted = true;
@@ -30,6 +32,7 @@ export default function FloatingChatBubble() {
 
             if (!loggedIn) {
                 setUnreadTotal(0);
+                setUnreadContactId(null);
                 return;
             }
 
@@ -49,10 +52,16 @@ export default function FloatingChatBubble() {
             if (!isMounted) return;
             if (!response.ok) {
                 setUnreadTotal(0);
+                setUnreadContactId(null);
                 return;
             }
 
             setUnreadTotal(result?.unreadTotal ?? 0);
+            setUnreadContactId(
+                typeof result?.unreadContactId === "number" && Number.isFinite(result.unreadContactId)
+                    ? result.unreadContactId
+                    : null,
+            );
         };
 
         void loadAuthAndUnread();
@@ -80,7 +89,7 @@ export default function FloatingChatBubble() {
     return (
         <div className="fixed bottom-5 right-5 z-[70]">
             <Link
-                href="/chat"
+                href={unreadContactId ? `/chat?contactId=${unreadContactId}` : "/chat"}
                 className={`relative flex h-14 w-14 items-center justify-center rounded-full shadow-xl transition hover:-translate-y-0.5 ${
                     pathname === "/chat"
                         ? "bg-zinc-900 text-white"

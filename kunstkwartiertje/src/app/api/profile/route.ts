@@ -119,11 +119,16 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: roleProfileError.message }, { status: 500 });
         }
 
+        const { data: bannerUrlData } = supabase.storage
+            .from("profile-pictures")
+            .getPublicUrl(`banners/${user.id}/banner`);
+
         return NextResponse.json({
             profile: {
                 username: roleProfile?.username ?? user.username ?? email.split("@")[0],
                 about_me: roleProfile?.about_me ?? "",
                 profile_pic: roleProfile?.profile_pic ?? "",
+                banner_url: `${bannerUrlData.publicUrl}?v=${Date.now()}`,
                 role: resolvedRole,
             },
         });

@@ -11,6 +11,7 @@ type PublicProfile = {
     username: string;
     aboutMe: string;
     profilePic: string;
+    bannerUrl?: string;
     role: string | null;
     email: string;
     status: string | null;
@@ -83,7 +84,7 @@ export default function PublicProfilePage() {
 
     return (
         <div className="min-h-screen bg-zinc-50 px-4 py-8 sm:px-6 lg:px-10">
-            <div className="mx-auto max-w-4xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
+            <div className="mx-auto max-w-4xl rounded-none border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
                 <div className="mb-6 flex items-center justify-between gap-3">
                     <div>
                         <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">Publiek profiel</p>
@@ -91,36 +92,45 @@ export default function PublicProfilePage() {
                     </div>
                     <Link
                         href="/art_gallery"
-                        className="rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                        className="rounded-none border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
                     >
                         Terug naar gallery
                     </Link>
                 </div>
 
                 {isLoading ? (
-                    <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700">
+                    <div className="rounded-none border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
                         Profiel laden...
                     </div>
                 ) : error ? (
-                    <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>
+                    <div className="rounded-none border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>
                 ) : profile ? (
                     <div className="space-y-6">
-                        <div className="rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-zinc-50 p-6">
+                        <div className="rounded-none border border-zinc-200 bg-gradient-to-br from-white to-zinc-50 p-6">
+                            <div className="mb-5 h-28 w-full overflow-hidden rounded-none bg-gradient-to-r from-zinc-900 to-zinc-700">
+                                {profile.bannerUrl ? (
+                                    <img
+                                        src={profile.bannerUrl}
+                                        alt={`${profile.username} banner`}
+                                        className="h-full w-full object-cover"
+                                    />
+                                ) : null}
+                            </div>
                             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
                                 <div className="flex items-center gap-4">
                                     <img
                                         src={profile.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.username)}`}
                                         alt={profile.username}
-                                        className="h-20 w-20 rounded-full object-cover ring-1 ring-zinc-200"
+                                        className="h-20 w-20 rounded-none object-cover ring-1 ring-zinc-200"
                                     />
                                     <div>
                                         <h2 className="text-2xl font-bold text-zinc-900">{profile.username}</h2>
                                         <p className="mt-1 text-sm text-zinc-600">{roleLabel(profile.role)}</p>
                                         <div className="mt-3 flex flex-wrap gap-2 text-sm text-zinc-600">
-                                            <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">
+                                            <span className="rounded-none bg-zinc-100 px-3 py-1 font-medium text-zinc-700">
                                                 {followerCount} volgers
                                             </span>
-                                            <span className="rounded-full bg-zinc-100 px-3 py-1 font-medium text-zinc-700">
+                                            <span className="rounded-none bg-zinc-100 px-3 py-1 font-medium text-zinc-700">
                                                 {followingCount} gevolgd
                                             </span>
                                         </div>
@@ -130,7 +140,7 @@ export default function PublicProfilePage() {
                                     <FollowButton targetUserId={profile.userId} />
                                     <Link
                                         href="/chat"
-                                        className="rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
+                                        className="rounded-none bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
                                     >
                                         Open chat hub
                                     </Link>
@@ -138,7 +148,7 @@ export default function PublicProfilePage() {
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+                        <div className="rounded-none border border-zinc-200 bg-white p-6">
                             <h3 className="text-lg font-semibold text-zinc-900">Over deze gebruiker</h3>
                             <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-zinc-700">
                                 {profile.aboutMe || "Deze gebruiker heeft nog geen bio ingevuld."}
