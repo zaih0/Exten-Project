@@ -321,7 +321,6 @@ export default function AccompanistArtistProfilePage() {
     };
 
     return (
-<<<<<<< HEAD
         <div
             className="min-h-screen px-4 py-8 md:px-8"
             style={{
@@ -330,10 +329,6 @@ export default function AccompanistArtistProfilePage() {
             }}
         >
             <div className="mx-auto w-full max-w-4xl rounded-none border border-gray-100 bg-white/95 p-6 shadow-sm md:p-8">
-=======
-        <div className="min-h-screen bg-white px-4 py-8 md:px-8">
-            <div className="mx-auto w-full max-w-4xl rounded-2xl border border-gray-100 bg-white/95 p-6 shadow-sm md:p-8">
->>>>>>> dabd3a2cd4de61c636ff91759f04e42bd4f44d4e
                 <div className="mb-6 flex items-center justify-between gap-3 border-b border-gray-100 pb-4">
                     <h1 className="text-2xl font-bold text-gray-900">Artiestprofiel beheren</h1>
                     <Link
