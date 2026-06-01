@@ -318,6 +318,11 @@ export default function AdminPage() {
             setIsLoadingArtworkRequests(false);
         };
 
+        void loadPendingRequests();
+        void loadBlockedUsers();
+        void loadPendingArtworkRequests();
+        void loadPasswordLogs();
+
         const loadAllUsers = async () => {
             const response = await fetch("/api/admin/users", {
                 method: "GET",
@@ -341,6 +346,8 @@ export default function AdminPage() {
             setAllUsers(result?.users ?? []);
             setIsLoadingAllUsers(false);
         };
+
+        void loadAllUsers();
 
         const loadAllArtworks = async () => {
             setIsLoadingAllArtworks(true);
@@ -962,6 +969,7 @@ export default function AdminPage() {
     }
 
     return (
+<<<<<<< HEAD
         <div
             className="kk-admin-theme min-h-screen px-6 py-8 font-sans"
             style={{
@@ -969,6 +977,9 @@ export default function AdminPage() {
                     "radial-gradient(circle at 12% 18%, rgba(232, 121, 249, 0.34) 0%, rgba(196, 181, 253, 0.20) 30%, rgba(255,255,255,0) 62%), radial-gradient(circle at 86% 12%, rgba(168, 85, 247, 0.34) 0%, rgba(129, 140, 248, 0.18) 34%, rgba(255,255,255,0) 62%), radial-gradient(circle at 50% 92%, rgba(217, 70, 239, 0.26) 0%, rgba(139, 92, 246, 0.14) 38%, rgba(255,255,255,0) 68%), linear-gradient(135deg, rgba(250, 245, 255, 1) 0%, rgba(237, 233, 254, 1) 38%, rgba(243, 232, 255, 1) 68%, rgba(253, 242, 248, 1) 100%)",
             }}
         >
+=======
+        <div className="min-h-screen bg-white px-6 py-8 font-sans">
+>>>>>>> dabd3a2cd4de61c636ff91759f04e42bd4f44d4e
             <div className="fixed right-6 top-6 z-50" ref={notificationRef}>
                 <button
                     type="button"
@@ -1523,7 +1534,7 @@ export default function AdminPage() {
                                 type="button"
                                 onClick={() => void handleSaveArtwork()}
                                 disabled={isSavingArtwork || !editTitle.trim()}
-                                className="rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="rounded-full bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 {isSavingArtwork ? "Opslaan..." : "Opslaan"}
                             </button>
@@ -1722,16 +1733,8 @@ export default function AdminPage() {
                                 Beheer toegangsverzoeken en moderatie vanaf één overzicht.
                             </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <a
-                                href="/admin/cms"
-                                className="rounded-full bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700"
-                            >
-                                Open CMS editor
-                            </a>
-                            <div className="rounded-full bg-purple-100 px-3 py-1.5 text-xs font-semibold text-purple-700">
-                                {pendingCount} wachtend{pendingCount === 1 ? " verzoek" : "e verzoeken"}
-                            </div>
+                        <div className="rounded-full bg-purple-100 px-3 py-1.5 text-xs font-semibold text-purple-700">
+                            {pendingCount} wachtend{pendingCount === 1 ? " verzoek" : "e verzoeken"}
                         </div>
                     </div>
                 </div>
@@ -1811,17 +1814,26 @@ export default function AdminPage() {
                                         onClick={() => setActiveTab(tab.key)}
                                         className={
                                             isActive
+<<<<<<< HEAD
                                                 ? "flex items-center justify-between rounded-lg border border-zinc-900 bg-zinc-900 px-3 py-2 text-left text-sm font-semibold text-white shadow-sm"
                                                 : "flex items-center justify-between rounded-lg bg-white/60 px-3 py-2 text-left text-sm font-semibold text-zinc-800 ring-1 ring-zinc-300 hover:bg-white/80 focus:outline-none focus:ring-2 focus:ring-zinc-400"
+=======
+                                                ? "flex items-center justify-between rounded-lg bg-zinc-900 px-3 py-2 text-left text-sm font-semibold text-white shadow-md hover:bg-zinc-800"
+                                                : "flex items-center justify-between rounded-lg bg-white/60 px-3 py-2 text-left text-sm font-semibold text-zinc-800 ring-1 ring-zinc-200/80 hover:bg-white/80 focus:outline-none focus:ring-2 focus:ring-zinc-300"
+>>>>>>> dabd3a2cd4de61c636ff91759f04e42bd4f44d4e
                                         }
                                     >
                                         <span>{tab.label}</span>
                                         {badgeCount !== null && badgeCount > 0 && (
+<<<<<<< HEAD
                                             <span
                                                 className={`rounded-full px-2 py-0.5 text-xs font-bold ${
                                                     isActive ? "bg-zinc-100 text-zinc-900" : "bg-zinc-200 text-zinc-800"
                                                 }`}
                                             >
+=======
+                                            <span className="rounded-full bg-white/90 px-2 py-0.5 text-xs font-bold text-zinc-700">
+>>>>>>> dabd3a2cd4de61c636ff91759f04e42bd4f44d4e
                                                 {badgeCount}
                                             </span>
                                         )}
@@ -1866,7 +1878,7 @@ export default function AdminPage() {
                                             </div>
                                             <a
                                                 href="/chat"
-                                                className="inline-flex items-center justify-center rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-purple-700"
+                                                className="inline-flex items-center justify-center rounded-full bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800"
                                             >
                                                 Open chat hub
                                             </a>
@@ -2239,7 +2251,7 @@ export default function AdminPage() {
                                                 type="button"
                                                 onClick={() => void handlePasswordReset()}
                                                 disabled={isResettingPassword || isLoadingAllUsers}
-                                                className="rounded-full bg-purple-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                                className="rounded-full bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
                                             >
                                                 {isResettingPassword ? "Bezig..." : "Wachtwoord aanpassen"}
                                             </button>

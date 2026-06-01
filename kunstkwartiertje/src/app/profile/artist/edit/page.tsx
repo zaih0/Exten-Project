@@ -300,6 +300,7 @@ export default function ArtistEditPage() {
 
     return (
         <>
+<<<<<<< HEAD
         <div
             className="flex min-h-screen items-start justify-center px-4 py-10 md:px-8"
             style={{
@@ -308,6 +309,10 @@ export default function ArtistEditPage() {
             }}
         >
             <div className="w-full max-w-5xl rounded-none border border-gray-100 bg-white/95 p-6 shadow-sm md:p-8">
+=======
+        <div className="flex min-h-screen items-start justify-center bg-white px-4 py-10 md:px-8">
+            <div className="w-full max-w-5xl rounded-2xl border border-gray-100 bg-white/95 p-6 shadow-sm md:p-8">
+>>>>>>> dabd3a2cd4de61c636ff91759f04e42bd4f44d4e
                 <div className="mb-6 flex flex-col gap-4 border-b border-gray-100 pb-5 md:flex-row md:items-center md:justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">Kunstwerken bewerken</h1>
