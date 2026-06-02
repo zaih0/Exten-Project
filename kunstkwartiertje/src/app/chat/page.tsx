@@ -1,9 +1,10 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 
 type ChatCategoryKey = "admins" | "entrepreneurs" | "artists" | "accompanists";
 
@@ -90,7 +91,7 @@ const roleLabel = (role: string) => {
     return role;
 };
 
-export default function ChatPage() {
+function ChatPageContent() {
     const searchParams = useSearchParams();
     const requestedContactId = Number(searchParams.get("contactId"));
     const [currentUser, setCurrentUser] = useState<ChatContactsResponse["currentUser"] | null>(null);
@@ -757,3 +758,11 @@ export default function ChatPage() {
         </div>
     );
 }
+
+export default dynamic(() => Promise.resolve(function ChatPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-white px-4 py-6">Laden...</div>}>
+            <ChatPageContent />
+        </Suspense>
+    );
+}), { ssr: false });
