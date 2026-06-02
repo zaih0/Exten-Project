@@ -8,6 +8,16 @@ type PickupAssignmentBody = {
     action?: "assign" | "confirm_pickup";
 };
 
+type ReservationRow = {
+    user_id: number | string;
+    art_id: number | string;
+    pickup_status?: string | null;
+    reservation_status?: string | null;
+    picked_up_at?: string | null;
+    current_location_name?: string | null;
+    current_location_address?: string | null;
+};
+
 const normalizePickupStatus = (pickupStatus: string | null | undefined, reservationStatus: string | null | undefined) => {
     if (reservationStatus === "pending") {
         return "pending_request";
@@ -76,7 +86,7 @@ export async function GET(request: Request) {
         }
 
         const reservationsError = reservationsQuery.error;
-        const reservations = reservationsQuery.data;
+        const reservations = (reservationsQuery.data ?? []) as ReservationRow[];
 
         if (reservationsError) {
             if (reservationsError.code === "42703") {
@@ -92,7 +102,7 @@ export async function GET(request: Request) {
         }
 
         const entrepreneurIds = Array.from(
-            new Set((reservations ?? []).map((item) => Number(item.user_id)).filter((value) => Number.isFinite(value))),
+            new Set(reservations.map((item) => Number(item.user_id)).filter((value) => Number.isFinite(value))),
         );
 
         const entrepreneursById = new Map<number, { username: string | null; email: string | null }>();
@@ -120,7 +130,7 @@ export async function GET(request: Request) {
             artworksById.set(Number(artwork.id), artwork);
         }
 
-        const pickups = (reservations ?? []).map((reservation) => {
+        const pickups = reservations.map((reservation) => {
             const artwork = artworksById.get(Number(reservation.art_id));
             const entrepreneur = entrepreneursById.get(Number(reservation.user_id));
             const reservationStatus = reservation.reservation_status ?? "approved";
