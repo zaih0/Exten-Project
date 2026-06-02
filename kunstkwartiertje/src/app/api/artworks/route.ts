@@ -45,6 +45,18 @@ const checkManagedArtistPermission = async (params: {
     return { allowed: true, reason: null as string | null };
 };
 
+const normalizePickupStatus = (pickupStatus: string | null | undefined, reservationStatus: string | null | undefined) => {
+    if (reservationStatus === "pending") {
+        return "pending_request";
+    }
+
+    if (pickupStatus === "awaiting_artist_confirmation" || pickupStatus === "picked_up") {
+        return pickupStatus;
+    }
+
+    return "reserved";
+};
+
 export async function GET(request: Request) {
     const url = new URL(request.url);
     const email = url.searchParams.get("email")?.trim();
@@ -114,10 +126,21 @@ export async function GET(request: Request) {
             >();
 
             if (artIds.length > 0) {
-                const { data: reservations, error: reservationsError } = await supabase
+                let reservationsQuery: any = await supabase
                     .from("reserved_artworks")
-                    .select("art_id, pickup_status, current_location_name, current_location_address")
-                    .in("art_id", artIds);
+                    .select("art_id, pickup_status, reservation_status, current_location_name, current_location_address")
+                    .in("art_id", artIds)
+                    .in("reservation_status", ["approved"]);
+
+                if (reservationsQuery.error?.code === "42703") {
+                    reservationsQuery = await supabase
+                        .from("reserved_artworks")
+                        .select("art_id, pickup_status, current_location_name, current_location_address")
+                        .in("art_id", artIds);
+                }
+
+                const reservationsError = reservationsQuery.error;
+                const reservations = reservationsQuery.data;
 
                 if (reservationsError && reservationsError.code !== "42703") {
                     return NextResponse.json({ error: reservationsError.message }, { status: 500 });
@@ -125,7 +148,10 @@ export async function GET(request: Request) {
 
                 for (const reservation of reservations ?? []) {
                     reservationByArtId.set(Number(reservation.art_id), {
-                        pickup_status: reservation.pickup_status ?? null,
+                        pickup_status: normalizePickupStatus(
+                            reservation.pickup_status ?? null,
+                            typeof reservation.reservation_status === "string" ? reservation.reservation_status : null,
+                        ),
                         current_location_name: reservation.current_location_name ?? null,
                         current_location_address: reservation.current_location_address ?? null,
                     });
@@ -284,7 +310,7 @@ export async function POST(request: Request) {
                 images: imageUrl,
                 user_id: artistUser.id,
                 price,
-                status: "pending",
+                status: "approved",
                 denial_reason: null,
             })
             .select()
@@ -307,7 +333,7 @@ export async function POST(request: Request) {
                 description: data.description,
                 imageUrl: artworkImage,
                 price: typeof data.price === "number" ? data.price : null,
-                status: (data.status ?? "pending") as ArtworkStatus,
+                status: (data.status ?? "approved") as ArtworkStatus,
             },
         });
     } catch (error) {

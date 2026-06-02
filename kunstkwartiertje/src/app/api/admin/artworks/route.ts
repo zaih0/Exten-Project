@@ -77,10 +77,21 @@ export async function GET() {
         // Enrich with location data from reserved_artworks
         if (artworks.length > 0) {
             const artIds = artworks.map((a) => a.id);
-            const { data: reservations, error: reservationsError } = await supabase
+            let reservationsQuery: any = await supabase
                 .from("reserved_artworks")
-                .select("art_id, current_location_name, current_location_address")
-                .in("art_id", artIds);
+                .select("art_id, current_location_name, current_location_address, reservation_status")
+                .in("art_id", artIds)
+                .in("reservation_status", ["approved"]);
+
+            if (reservationsQuery.error?.code === "42703") {
+                reservationsQuery = await supabase
+                    .from("reserved_artworks")
+                    .select("art_id, current_location_name, current_location_address")
+                    .in("art_id", artIds);
+            }
+
+            const reservationsError = reservationsQuery.error;
+            const reservations = reservationsQuery.data;
 
             if (reservationsError && reservationsError.code !== "42703") {
                 return NextResponse.json({ error: reservationsError.message }, { status: 500 });
@@ -194,13 +205,26 @@ export async function PATCH(request: Request) {
             newLocationName = (formData.get("locationName") as string | null)?.trim() || null;
             newLocationAddress = (formData.get("locationAddress") as string | null)?.trim() || null;
 
-            const { error: locError } = await supabase
+            let locationUpdate: any = await supabase
                 .from("reserved_artworks")
                 .update({
                     current_location_name: newLocationName,
                     current_location_address: newLocationAddress,
                 })
-                .eq("art_id", artworkId);
+                .eq("art_id", artworkId)
+                .eq("reservation_status", "approved");
+
+            if (locationUpdate.error?.code === "42703") {
+                locationUpdate = await supabase
+                    .from("reserved_artworks")
+                    .update({
+                        current_location_name: newLocationName,
+                        current_location_address: newLocationAddress,
+                    })
+                    .eq("art_id", artworkId);
+            }
+
+            const locError = locationUpdate.error;
 
             if (locError && locError.code !== "42703") {
                 console.warn("Location update warning:", locError.message);

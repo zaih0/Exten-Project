@@ -236,9 +236,10 @@ export default function EntrepreneurProfile() {
 	};
 
 	return (
-		<div className="flex min-h-screen items-center justify-center bg-zinc-50 p-4 md:p-6 text-zinc-900">
-			<div className="w-full max-w-2xl rounded-none bg-white p-8 shadow-sm ring-1 ring-zinc-200">
-				<div className="relative mb-5 h-28 w-full overflow-hidden rounded-none bg-gradient-to-r from-zinc-900 to-zinc-700">
+		<div className="min-h-screen bg-zinc-50 px-4 py-8 text-zinc-900 md:px-8 md:py-10">
+			<div className="mx-auto w-full max-w-6xl space-y-6">
+				<div className="rounded-none border border-zinc-200 bg-white p-5 shadow-sm md:p-8 lg:p-10">
+					<div className="relative mb-6 h-36 w-full overflow-hidden rounded-none bg-gradient-to-r from-zinc-900 to-zinc-700 md:h-44">
 					{bannerUrl && <img src={bannerUrl} alt="Profielbanner" className="h-full w-full object-cover" onError={() => setBannerUrl("")} />}
 					<input
 						ref={bannerInputRef}
@@ -260,37 +261,53 @@ export default function EntrepreneurProfile() {
 					>
 						{isUploadingBanner ? "Uploaden..." : "Banner wijzigen"}
 					</button>
-				</div>
+					</div>
 
-				{(error || message) && (
-					<p className={`mb-4 rounded-none px-3 py-2 text-sm ${error ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>
-						{error ?? message}
-					</p>
-				)}
-				<div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
-					<div className="flex items-center gap-4">
-						<img src={profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileUsername || username)}`} alt="Profielfoto" className="h-16 w-16 rounded-none object-cover ring-1 ring-zinc-200" />
-						<div>
-							<h1 className="text-2xl font-bold">{profileUsername || username}</h1>
-							<div className="mt-2 flex flex-wrap gap-2 text-sm text-zinc-600">
-								<span className="rounded-none bg-zinc-100 px-3 py-1 font-medium text-zinc-700">{followerCount} volgers</span>
-								<span className="rounded-none bg-zinc-100 px-3 py-1 font-medium text-zinc-700">{followingCount} gevolgd</span>
+					{(error || message) && (
+						<p className={`mb-5 rounded-none px-3 py-2 text-sm ${error ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>
+							{error ?? message}
+						</p>
+					)}
+
+					<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] lg:items-start">
+						<div className="space-y-5">
+							<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
+								<img
+									src={profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileUsername || username)}`}
+									alt="Profielfoto"
+									className="h-20 w-20 rounded-none object-cover ring-1 ring-zinc-200"
+								/>
+								<div>
+									<h1 className="text-3xl font-bold tracking-tight">{profileUsername || username}</h1>
+									<div className="mt-3 flex flex-wrap gap-2 text-sm text-zinc-600">
+										<span className="rounded-none border border-zinc-200 bg-zinc-50 px-3 py-1 font-medium text-zinc-700">{followerCount} volgers</span>
+										<span className="rounded-none border border-zinc-200 bg-zinc-50 px-3 py-1 font-medium text-zinc-700">{followingCount} gevolgd</span>
+									</div>
+								</div>
+							</div>
+
+							<div className="rounded-none border border-zinc-200 bg-zinc-50 p-4 md:p-5">
+								<h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-500">Over mij</h2>
+								<p className="mt-3 leading-relaxed text-zinc-700">{aboutMe || "Over mij..."}</p>
+							</div>
+						</div>
+
+						<div className="rounded-none border border-zinc-200 bg-white p-4 md:p-5">
+							<h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-zinc-500">Snelle acties</h2>
+							<div className="mt-4 grid grid-cols-1 gap-3">
+								<Link href="/chat" className="rounded-none border border-black bg-black px-4 py-2 text-center text-sm font-semibold text-white hover:bg-gray-900">
+									Chat hub
+								</Link>
+								<Link href="/profile/pickups" className="rounded-none border border-amber-300 bg-amber-100 px-4 py-2 text-center text-sm font-semibold text-amber-800 hover:bg-amber-200">
+									Pickup systeem
+								</Link>
+								<button type="button" onClick={openEdit} className="rounded-none border border-zinc-300 bg-zinc-100 px-4 py-2 text-sm font-semibold hover:bg-zinc-200">
+									Profiel bewerken
+								</button>
 							</div>
 						</div>
 					</div>
-					<div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 lg:w-auto lg:min-w-[470px]">
-						<Link href="/chat" className="rounded-none bg-black px-4 py-2 text-center text-sm font-semibold text-white hover:bg-gray-900">
-							Chat hub
-						</Link>
-						<Link href="/profile/pickups" className="rounded-none bg-amber-100 px-4 py-2 text-center text-sm font-semibold text-amber-800 hover:bg-amber-200">
-							Pickup systeem
-						</Link>
-						<button type="button" onClick={openEdit} className="rounded-none bg-zinc-100 px-4 py-2 text-sm font-semibold hover:bg-zinc-200">
-							Profiel bewerken
-						</button>
-					</div>
 				</div>
-				<p className="mt-4 text-zinc-600">{aboutMe || "Over mij..."}</p>
 			</div>
 
 			{isEditOpen && (

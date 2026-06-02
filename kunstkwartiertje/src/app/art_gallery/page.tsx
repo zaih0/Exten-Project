@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import useSiteContent from "src/app/components/cms/useSiteContent";
 import FollowButton from "src/app/components/profile/FollowButton";
+import useCurrentUserProfile from "src/app/components/profile/useCurrentUserProfile";
 import { createClient } from "src/utils/supabase/client";
+import { normalizeRole } from "src/utils/profileRoleTable";
 
 type Artwork = {
     id: number;
@@ -30,6 +32,7 @@ type ArtistGroup = {
 
 export default function Home() {
     const { content } = useSiteContent();
+    const { role: currentUserRole, isLoading: isRoleLoading } = useCurrentUserProfile();
     const [artworks, setArtworks] = useState<Artwork[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -38,6 +41,8 @@ export default function Home() {
     const [reservationMessage, setReservationMessage] = useState<string | null>(null);
     const [reservationError, setReservationError] = useState<string | null>(null);
     const [reservedArtworkIds, setReservedArtworkIds] = useState<number[]>([]);
+    const normalizedRole = normalizeRole(currentUserRole);
+    const canReserveArtwork = normalizedRole === "ondernemer";
 
     const artworksByArtist = useMemo(() => {
         return artworks.reduce<ArtistGroup[]>((groups, artwork) => {
@@ -111,7 +116,7 @@ export default function Home() {
 
             if (!user?.email || !isMounted) return;
 
-            const response = await fetch(`/api/reservations?email=${encodeURIComponent(user.email)}`, {
+            const response = await fetch(`/api/reservations?email=${encodeURIComponent(user.email)}&activeOnly=true`, {
                 method: "GET",
                 cache: "no-store",
             });
@@ -140,6 +145,12 @@ export default function Home() {
     const handleReserveArtwork = async (artId: number) => {
         setReservationError(null);
         setReservationMessage(null);
+
+        if (!canReserveArtwork) {
+            setReservationError("Alleen ondernemers kunnen kunstwerken reserveren.");
+            return;
+        }
+
         setIsReserving(true);
 
         const supabase = createClient();
@@ -175,13 +186,13 @@ export default function Home() {
         }
 
         setReservedArtworkIds((previous) => (previous.includes(artId) ? previous : [...previous, artId]));
-        setReservationMessage(result?.message ?? "Kunstwerk gereserveerd. Je vindt deze in je profiel.");
+        setReservationMessage(result?.message ?? "Reserveringsverzoek verzonden. Je ziet de status in je profiel.");
         setIsReserving(false);
     };
 
     return (
         <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-10" style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}>
-            <div className="mx-auto w-full max-w-7xl rounded-3xl border border-stone-300 p-6 shadow-[0_12px_36px_rgba(38,25,13,0.18)] sm:p-8" style={{ backgroundColor: "var(--kk-card)", borderRadius: "var(--kk-radius)" }}>
+            <div className="mx-auto w-full max-w-7xl border border-stone-300 p-6 shadow-[0_12px_28px_rgba(17,17,17,0.08)] sm:p-8" style={{ backgroundColor: "var(--kk-card)", borderRadius: "var(--kk-radius)" }}>
                 <div className="mb-5 flex flex-col items-center text-center">
                     <h1 className="text-xl font-semibold tracking-[0.2em] text-stone-800 sm:text-2xl">{content.gallery.title}</h1>
                     <p className="mt-3 max-w-2xl text-sm leading-relaxed text-stone-700 sm:text-base">
@@ -206,19 +217,19 @@ export default function Home() {
                         {artworksByArtist.map((artistGroup) => (
                             <section
                                 key={artistGroup.artistKey}
-                                className="rounded-2xl border border-stone-300 bg-gradient-to-b from-stone-50 to-stone-100 px-4 py-5 shadow-inner sm:px-5"
+                                className="border border-stone-300 bg-stone-50 px-4 py-5 shadow-[0_6px_18px_rgba(17,17,17,0.04)] sm:px-5"
                                 style={{ background: "var(--kk-card)", borderRadius: "var(--kk-radius)" }}
                             >
                                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="flex items-center gap-3">
                                         <Link
                                             href={artistGroup.artistUserId ? `/profile/${artistGroup.artistUserId}` : "/art_gallery"}
-                                            className="flex items-center gap-3 rounded-full border border-stone-300 bg-white px-3 py-2 shadow-sm transition hover:-translate-y-0.5 hover:bg-stone-50"
+                                            className="flex items-center gap-3 border border-stone-300 bg-white px-3 py-2 shadow-sm transition hover:bg-stone-100"
                                         >
                                             <img
                                                 src={artistGroup.artistProfilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(artistGroup.artistName)}`}
                                                 alt={artistGroup.artistName}
-                                                className="h-11 w-11 rounded-full object-cover ring-1 ring-stone-200"
+                                                className="h-11 w-11 object-cover ring-1 ring-stone-200"
                                             />
                                             <div>
                                                 <p className="text-xs uppercase tracking-[0.2em] text-stone-500">Profiel</p>
@@ -240,22 +251,22 @@ export default function Home() {
                                                 setReservationError(null);
                                                 setReservationMessage(null);
                                             }}
-                                            className="w-[16.5rem] shrink-0 rounded-sm border border-[#aa9a75] bg-[#d9c8a0] p-2 text-left shadow-[0_10px_22px_rgba(54,40,24,0.32)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_26px_rgba(54,40,24,0.38)]"
+                                            className="w-[16.5rem] shrink-0 border border-stone-300 bg-white p-2 text-left shadow-[0_10px_22px_rgba(17,17,17,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_26px_rgba(17,17,17,0.12)]"
                                         >
-                                            <div className="relative mb-2 aspect-[4/5] w-full overflow-hidden border border-[#8a7a56] bg-stone-100 shadow-inner">
+                                            <div className="relative mb-2 aspect-[4/5] w-full overflow-hidden border border-stone-300 bg-stone-100 shadow-inner">
                                                 <img
                                                     src={artwork.imageUrl || "/Schilderij1.png"}
                                                     alt={artwork.title}
                                                     className="h-full w-full object-cover"
                                                 />
                                             </div>
-                                            <div className="bg-[#efe7d3] px-3 py-2 text-center">
-                                                <h3 className="text-sm font-semibold tracking-wide text-stone-800">{artwork.title}</h3>
+                                            <div className="border border-stone-300 bg-stone-50 px-3 py-2 text-center">
+                                                <h3 className="text-sm font-semibold tracking-wide text-stone-900">{artwork.title}</h3>
                                                 <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-stone-700">
                                                     {artwork.description || "Geen beschrijving"}
                                                 </p>
                                                 {typeof artwork.price === "number" && (
-                                                    <p className="mt-2 text-xs font-semibold text-stone-800">
+                                                    <p className="mt-2 text-xs font-semibold text-stone-900">
                                                         € {artwork.price.toFixed(2)}
                                                     </p>
                                                 )}
@@ -280,10 +291,10 @@ export default function Home() {
                         }
                     }}
                 >
-                    <div className="w-full overflow-hidden rounded-t-3xl bg-[#f5ecdb] shadow-2xl sm:max-w-5xl sm:rounded-2xl">
+                    <div className="w-full overflow-hidden border border-stone-300 bg-stone-50 shadow-2xl sm:max-w-5xl" style={{ borderRadius: "var(--kk-radius)" }}>
                         <div className="grid grid-cols-1 sm:grid-cols-[1.2fr_1fr]">
                             <div className="bg-[#121212] p-4 sm:p-6">
-                                <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-md border border-stone-700 bg-black">
+                                <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden border border-stone-700 bg-black" style={{ borderRadius: "var(--kk-radius)" }}>
                                     <img
                                         src={selectedArtwork.imageUrl || "/Schilderij1.png"}
                                         alt={selectedArtwork.title}
@@ -299,12 +310,12 @@ export default function Home() {
                                     <div className="mt-3 flex flex-wrap items-center gap-3">
                                         <Link
                                             href={selectedArtwork.artistUserId ? `/profile/${selectedArtwork.artistUserId}` : "/art_gallery"}
-                                            className="inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100"
+                                                className="inline-flex items-center gap-2 border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100"
                                         >
                                             <img
                                                 src={selectedArtwork.artistProfilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedArtwork.artistName || "Onbekende artiest")}`}
                                                 alt={selectedArtwork.artistName || "Onbekende artiest"}
-                                                className="h-8 w-8 rounded-full object-cover ring-1 ring-stone-200"
+                                                className="h-8 w-8 object-cover ring-1 ring-stone-200"
                                             />
                                             <span>{selectedArtwork.artistName || "Onbekende artiest"}</span>
                                         </Link>
@@ -320,7 +331,7 @@ export default function Home() {
                                     )}
 
                                     {(selectedArtwork.locationName || selectedArtwork.locationAddress) && (
-                                        <div className="mt-4 rounded-lg border border-stone-300 bg-stone-50 p-3 text-sm text-stone-700">
+                                        <div className="mt-4 border border-stone-300 bg-stone-100 p-3 text-sm text-stone-700" style={{ borderRadius: "var(--kk-radius)" }}>
                                             <p className="font-semibold text-stone-800">Huidige locatie</p>
                                             <p className="mt-1">{selectedArtwork.locationName || "Externe locatie"}</p>
                                             {selectedArtwork.locationAddress && (
@@ -337,13 +348,13 @@ export default function Home() {
                                     )}
 
                                     {reservationError && (
-                                        <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                                        <div className="mt-4 border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700" style={{ borderRadius: "var(--kk-radius)" }}>
                                             {reservationError}
                                         </div>
                                     )}
 
                                     {reservationMessage && (
-                                        <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                                        <div className="mt-4 border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700" style={{ borderRadius: "var(--kk-radius)" }}>
                                             {reservationMessage}
                                         </div>
                                     )}
@@ -352,7 +363,8 @@ export default function Home() {
                                 <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
                                     <Link
                                         href="/profile/reservations"
-                                        className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-center text-sm font-medium text-stone-700 hover:bg-stone-100"
+                                        className="!rounded-none border border-stone-300 bg-white px-4 py-2 text-center text-sm font-medium text-stone-700 hover:bg-stone-100"
+                                        style={{ borderRadius: 0 }}
                                     >
                                         Bekijk reserveringen
                                     </Link>
@@ -363,21 +375,25 @@ export default function Home() {
                                             setReservationError(null);
                                             setReservationMessage(null);
                                         }}
-                                        className="rounded-lg border border-stone-300 bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200"
+                                        className="!rounded-none border border-stone-300 bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200"
+                                        style={{ borderRadius: 0 }}
                                     >
                                         Sluiten
                                     </button>
                                     <button
                                         type="button"
-                                        disabled={isReserving || reservedArtworkIds.includes(selectedArtwork.id)}
+                                        disabled={isRoleLoading || !canReserveArtwork || isReserving || reservedArtworkIds.includes(selectedArtwork.id)}
                                         onClick={() => void handleReserveArtwork(selectedArtwork.id)}
-                                        className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-semibold text-white hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-400"
+                                        className="!rounded-none border border-stone-900 bg-stone-900 px-4 py-2 text-sm font-semibold text-white hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-400"
+                                        style={{ borderRadius: 0 }}
                                     >
-                                        {reservedArtworkIds.includes(selectedArtwork.id)
-                                            ? "Al gereserveerd"
+                                        {!canReserveArtwork
+                                            ? "Alleen ondernemers kunnen reserveren"
+                                            : reservedArtworkIds.includes(selectedArtwork.id)
+                                            ? "Aanvraag al verstuurd"
                                             : isReserving
-                                              ? "Reserveren..."
-                                              : "Voeg toe aan reserveringen"}
+                                              ? "Verzoek verzenden..."
+                                              : "Vraag dit kunstwerk aan"}
                                     </button>
                                 </div>
                             </div>
