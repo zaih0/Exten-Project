@@ -317,7 +317,7 @@ export async function PATCH(request: Request) {
 
         const updatePayload = {
             pickup_status: pickupStatus,
-            picked_up_at: pickupStatus === "picked_up" ? new Date().toISOString() : null,
+            picked_up_at: pickupStatus === "awaiting_artist_confirmation" ? new Date().toISOString() : null,
             current_location_name: locationName || null,
             current_location_address: locationAddress || null,
         };
