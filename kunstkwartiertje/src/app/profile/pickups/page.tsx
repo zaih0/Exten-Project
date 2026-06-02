@@ -35,7 +35,7 @@ type ArtistPickup = {
     locationAddress?: string | null;
 };
 
-const formatPickupStatus = (status: PickupStatus) => {
+const formatPickupStatus = (status: PickupStatus | undefined) => {
     if (status === "picked_up") return "Opgehaald ✓";
     if (status === "awaiting_artist_confirmation") return "Wacht op bevestiging kunstenaar";
     if (status === "pending_request") return "In afwachting";
